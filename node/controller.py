@@ -55,7 +55,7 @@ def image_callback(img_msg):
 
     move = Twist()
     move.angular.z = p
-    move.linear.x = 0.2
+    move.linear.x = 0.1
 
     move_pub.publish(move)
 

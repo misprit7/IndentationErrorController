@@ -8,6 +8,8 @@ from sensor_msgs.msg import Image
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
 
+from plate_parse import plate_parse
+
 bridge = CvBridge()
 
 # Init node
@@ -28,6 +30,7 @@ def image_callback(img_msg):
     except CvBridgeError, e:
         rospy.logerr("CvBridge Error: {0}".format(e))
 
+    cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
 
     hsv = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
     frame_threshold = cv2.inRange(hsv, (0, 0, 80), (10, 10, 90))
@@ -59,7 +62,10 @@ def image_callback(img_msg):
 
     move_pub.publish(move)
 
-    show_image(cv_image)
+    plate_img = plate_parse(cv_image, 200, 300)
+
+    if not (plate_img is None):
+      show_image(plate_img)
 
 image_sub = rospy.Subscriber("/R1/pi_camera/image_raw",Image,image_callback)
 velocity_pub = rospy.Publisher('/R1/cmd_vel', Twist, 

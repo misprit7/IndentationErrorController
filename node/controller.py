@@ -8,12 +8,16 @@ from sensor_msgs.msg import Image
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
 
+import os
+import thread
+
+
+
 bridge = CvBridge()
 
 # Init node
 rospy.init_node('indentation_error_controller')
 rate = rospy.Rate(2)
-
 
 move_pub = rospy.Publisher('/R1/cmd_vel', Twist, 
   queue_size=1)
@@ -60,6 +64,8 @@ def image_callback(img_msg):
     move_pub.publish(move)
 
     show_image(cv_image)
+
+
 
 image_sub = rospy.Subscriber("/R1/pi_camera/image_raw",Image,image_callback)
 velocity_pub = rospy.Publisher('/R1/cmd_vel', Twist, 

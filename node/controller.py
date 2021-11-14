@@ -10,6 +10,8 @@ from cv_bridge import CvBridge, CvBridgeError
 
 from plate_parse import plate_parse
 
+from std_msgs.msg import String
+
 bridge = CvBridge()
 
 # Init node
@@ -18,6 +20,9 @@ rate = rospy.Rate(2)
 
 
 move_pub = rospy.Publisher('/R1/cmd_vel', Twist, 
+  queue_size=1)
+
+plate_pub = rospy.Publisher('/license_plate', String,
   queue_size=1)
 
 def show_image(img):
@@ -62,15 +67,30 @@ def image_callback(img_msg):
 
     move_pub.publish(move)
 
-    plate_img = plate_parse(cv_image, 200, 300)
+    # plate_img = plate_parse(cv_image, 200, 300)
 
-    if not (plate_img is None):
-      show_image(plate_img)
+    plate_pts = plate_parse(cv_image, 200, 300)
+
+    # if not (plate_pts is None):
+    #   show_image(plate_img)
+
+    show_image(plate_pts)
 
 image_sub = rospy.Subscriber("/R1/pi_camera/image_raw",Image,image_callback)
 velocity_pub = rospy.Publisher('/R1/cmd_vel', Twist, 
   queue_size=1)
 
+plate_pub.publish("TeamRed,multi12,0,XR58")
+print("starting")
 
-while not rospy.is_shutdown():
+
+# while not rospy.is_shutdown():
+#     rate.sleep()
+
+for i in range(15):
     rate.sleep()
+    print("sleeping")
+
+
+print("closing")
+plate_pub.publish("TeamRed,multi12,-1,XR58")

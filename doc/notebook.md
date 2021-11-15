@@ -23,6 +23,7 @@ Xander Naumenko and Nader Kamali
     * Since SIFT didn't work we tried thresholding and manually find outside points of license plates
       * Realized that this solution was not ideal and was complicated to implement ourselves
     * Switched to opencv's getContours to find the outside edges of thresholded image and perspectiveTransform to transform it into a nice image
+    * https://www.pyimagesearch.com/2014/08/25/4-point-opencv-getperspective-transform-example/
 * November 15-21
   * Created a branch for time trials
     * Set up timer to start and stop

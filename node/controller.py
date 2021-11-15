@@ -10,6 +10,12 @@ from cv_bridge import CvBridge, CvBridgeError
 
 from std_msgs.msg import String
 
+from plate_parse import plate_parse
+
+import time
+
+start_time = time.time()
+
 bridge = CvBridge()
 
 # Init node
@@ -28,6 +34,14 @@ def show_image(img):
     cv2.waitKey(3)
 
 def image_callback(img_msg):
+    if time.time() - start_time < 4:
+        move = Twist()
+        move.angular.z = 0.3
+        move.linear.x = 0.1
+        move_pub.publish(move)
+        return
+
+    
     try:
         cv_image = bridge.imgmsg_to_cv2(img_msg, "passthrough")
     except CvBridgeError, e:
@@ -65,21 +79,26 @@ def image_callback(img_msg):
 
     move_pub.publish(move)
 
+    plate_img = plate_parse(cv_image, 200, 300)
+
+    if not (plate_img is None):
+      show_image(plate_img)
+
 image_sub = rospy.Subscriber("/R1/pi_camera/image_raw",Image,image_callback)
 velocity_pub = rospy.Publisher('/R1/cmd_vel', Twist, 
   queue_size=1)
 
-plate_pub.publish("TeamRed,multi12,0,XR58")
+time.sleep(1)
+
+plate_pub.publish(str("IndError,naderson,0,XR58"))
 print("starting")
 
 
-# while not rospy.is_shutdown():
-#     rate.sleep()
-
-for i in range(15):
+while not rospy.is_shutdown():
+    if time.time() - start_time > 60:
+        print("closing")
+        plate_pub.publish(str("IndError,naderson,-1,XR58"))
+        rospy.spin()
     rate.sleep()
-    print("sleeping 2")
 
 
-print("closing")
-plate_pub.publish("TeamRed,multi12,-1,XR58")

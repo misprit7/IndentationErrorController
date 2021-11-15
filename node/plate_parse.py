@@ -22,13 +22,19 @@ def plate_parse(image, width, height):
     contours.remove(top_cnt)
     bottom_cnt = max(contours, key = cv2.contourArea)
 
-    if cv2.contourArea(bottom_cnt) < 250:
+    if cv2.contourArea(bottom_cnt) < 50:
         return None
 
     top_box = cv2.boxPoints(cv2.minAreaRect(top_cnt))
     bottom_box = cv2.boxPoints(cv2.minAreaRect(bottom_cnt))
 
     pts = np.concatenate([top_box[2:4], bottom_box[0:2]])
+
+    if abs(top_box[2][0] - bottom_box[1][0]) > 30:
+        return None
+
+    if abs(top_box[3][0] - bottom_box[0][0]) > 30:
+        return None
 
     dst = np.array([
         [0, 0],
@@ -38,4 +44,3 @@ def plate_parse(image, width, height):
 
     M = cv2.getPerspectiveTransform(pts, dst)
     return cv2.warpPerspective(image, M, (width, height))
-

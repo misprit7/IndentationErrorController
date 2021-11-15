@@ -8,14 +8,11 @@ from sensor_msgs.msg import Image
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
 
-<<<<<<< HEAD
 import os
 import thread
 
 
-=======
 from plate_parse import plate_parse
->>>>>>> 00bea899f8246fd6d1ac18a2aa79edbf335cc1b7
 
 bridge = CvBridge()
 
@@ -72,7 +69,6 @@ def image_callback(img_msg):
 
     if not (plate_img is None):
       show_image(plate_img)
-
 
 
 image_sub = rospy.Subscriber("/R1/pi_camera/image_raw",Image,image_callback)

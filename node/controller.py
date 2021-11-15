@@ -67,8 +67,8 @@ def image_callback(img_msg):
 
     plate_img = plate_parse(cv_image, 200, 300)
 
-    if not (plate_img is None):
-      show_image(plate_img)
+    # if not (plate_img is None):
+    show_image(plate_img)
 
 
 image_sub = rospy.Subscriber("/R1/pi_camera/image_raw",Image,image_callback)

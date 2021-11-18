@@ -65,10 +65,11 @@ def image_callback(img_msg):
 
     move_pub.publish(move)
 
-    plate_img = plate_parse(cv_image, 200, 300)
+    plate_img = plate_parse(cv_image, 600, 300)
 
-    # if not (plate_img is None):
-    show_image(plate_img)
+    if not (plate_img is None):
+      show_image(plate_img)
+      cv2.imwrite('/home/fizzer/Pictures/plate_image.png',plate_img)
 
 
 image_sub = rospy.Subscriber("/R1/pi_camera/image_raw",Image,image_callback)

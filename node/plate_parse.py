@@ -45,6 +45,7 @@ def assemble_box(top_box, bottom_box):
 
     return pts
 
+<<<<<<< HEAD
 def parse(license):
     predicted = ""
   
@@ -55,6 +56,8 @@ def parse(license):
         predicted += decode(prediction)
 
     return predicted
+=======
+>>>>>>> 7e6da1b8df6357b8b91b8c55a2cc5083cfb3ed5f
 
 
 # Parses image
@@ -97,7 +100,6 @@ def plate_parse(image, width, height):
 
 
     pts = assemble_box(top_box, bottom_box)
-
 
 
     # pts = np.concatenate([top_box[2:4], bottom_box[0:2]])

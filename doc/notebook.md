@@ -29,6 +29,8 @@ Xander Naumenko and Nader Kamali
     * Set up timer to start and stop
     * Got the pid running around the track
 * November 22-28
+  * Added a second threshold to capture licenses on the other side of the track
+    * Threshold with the greatest mass (non-zero values) is deemed to be the valid one
   * Trained CNN model on generated license plate images
     * Blurred images by resizing them, imitating the blur of captured licenses
   * Implemented a plate parser that splits the captured license into characters, then reads them using the CNN

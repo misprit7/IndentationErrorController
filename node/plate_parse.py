@@ -45,7 +45,6 @@ def assemble_box(top_box, bottom_box):
 
     return pts
 
-<<<<<<< HEAD
 def parse(license):
     predicted = ""
   
@@ -56,8 +55,6 @@ def parse(license):
         predicted += decode(prediction)
 
     return predicted
-=======
->>>>>>> 7e6da1b8df6357b8b91b8c55a2cc5083cfb3ed5f
 
 
 # Parses image

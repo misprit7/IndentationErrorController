@@ -18,8 +18,9 @@ def plate_parse(image, width, height):
     _,contours,hierarchy = cv2.findContours(img_dilation, 1, 2)
     if len(contours) < 2:
         return None
-    top_cnt = max(contours, key = cv2.contourArea)
-    contours.remove(top_cnt)
+    top_cnt_index = max(range(len(contours)), key=lambda i: cv2.contourArea(contours[i]))
+    top_cnt = contours[top_cnt_index]
+    contours.pop(top_cnt_index)
     bottom_cnt = max(contours, key = cv2.contourArea)
 
     if cv2.contourArea(bottom_cnt) < 250:

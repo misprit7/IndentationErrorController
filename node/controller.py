@@ -8,6 +8,10 @@ from sensor_msgs.msg import Image
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
 
+import os
+import thread
+
+
 from plate_parse import plate_parse
 
 bridge = CvBridge()
@@ -15,7 +19,6 @@ bridge = CvBridge()
 # Init node
 rospy.init_node('indentation_error_controller')
 rate = rospy.Rate(2)
-
 
 move_pub = rospy.Publisher('/R1/cmd_vel', Twist, 
   queue_size=1)
@@ -62,10 +65,22 @@ def image_callback(img_msg):
 
     move_pub.publish(move)
 
-    plate_img = plate_parse(cv_image, 200, 300)
+    # plate_img = plate_parse(cv_image, 600, 300)
 
-    if not (plate_img is None):
-      show_image(plate_img)
+    # if not (plate_img is None):
+    #   show_image(plate_img)
+
+
+    #   cv2.imwrite('/home/fizzer/Pictures/plate_image.png',plate_img)
+
+    # thresh1 = cv2.inRange(hsv, (0, 0, 100), (0, 255, 125))
+    # thresh2 = cv2.inRange(hsv, (0, 0, 180), (0, 255, 205))
+    # show_image(thresh1)
+    # show_image(thresh2)
+
+    plate = plate_parse(cv_image, 600, 300)
+    print(plate)
+
 
 image_sub = rospy.Subscriber("/R1/pi_camera/image_raw",Image,image_callback)
 velocity_pub = rospy.Publisher('/R1/cmd_vel', Twist, 

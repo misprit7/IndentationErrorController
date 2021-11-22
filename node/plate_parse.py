@@ -79,12 +79,12 @@ def plate_parse(image, width, height):
     if len(contours) < 2:
         return None
 
-    top_cnt = max(contours, key = cv2.contourArea)
-
+    top_cnt_index = max(range(len(contours)), key=lambda i: cv2.contourArea(contours[i]))
+    top_cnt = contours[top_cnt_index]
     if cv2.contourArea(top_cnt) < 2000 or cv2.contourArea(top_cnt) > 8000:
         return None
+    contours.pop(top_cnt_index)
 
-    contours.remove(top_cnt)
     bottom_cnt = max(contours, key = cv2.contourArea)
 
     ratio = cv2.contourArea(top_cnt)/cv2.contourArea(bottom_cnt)

@@ -13,6 +13,7 @@ import thread
 
 
 from plate_parse import plate_parse
+from pedestrian_dodger import get_bottom_red
 
 bridge = CvBridge()
 
@@ -49,8 +50,18 @@ def image_callback(img_msg):
       cY = int(M["m01"] / M["m00"])
 
     cv2.circle(cv_image, (cX, cY), 5, [255, 255, 255], -1)
+    show_image(cv_image)
 
-    
+    bottom_red = get_bottom_red(hsv)
+    print(bottom_red)
+    if bottom_red > hsv.shape[1] - 400:
+      move = Twist()
+      move.angular.z = 0
+      move.linear.x = 0
+      move_pub.publish(move)
+      print('stopped')
+      return
+
     wP = 1
     wI = 1
     wD = 1

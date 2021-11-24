@@ -35,3 +35,6 @@ Xander Naumenko and Nader Kamali
     * Blurred images by resizing them, imitating the blur of captured licenses
   * Implemented a plate parser that splits the captured license into characters, then reads them using the CNN
   * Fixed Keras versioning issues (pending)
+  * Added state machine to keep track of what state the controller is in at every point
+  * Implemented pedestrian dodging using background subtraction
+    * https://www.geeksforgeeks.org/background-subtraction-opencv/

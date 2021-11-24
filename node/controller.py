@@ -60,10 +60,12 @@ def state_change(destState):
     state = destState
     print(state)
 
+pedestrian_no_move_counter = 0
 pedestrian_timer = 0
 def image_callback(img_msg):
     global state
     global pedestrian_timer
+    global pedestrian_no_move_counter
     try:
         cv_image = bridge.imgmsg_to_cv2(img_msg, "passthrough")
     except CvBridgeError, e:
@@ -96,16 +98,18 @@ def image_callback(img_msg):
 
     elif state == State.PEDESTRIAN_STOP:
         if not is_movement(cv_image):
-            state_change(State.PEDESTRIAN_RUN)
-            pedestrian_timer = rospy.get_time()
-        pass
+            if pedestrian_no_move_counter > 5:
+                state_change(State.PEDESTRIAN_RUN)
+                pedestrian_timer = rospy.get_time()
+                pedestrian_no_move_counter = 0 
+            else:
+                pedestrian_no_move_counter += 1
     elif state == State.PEDESTRIAN_RUN:
-        if rospy.get_time() - pedestrian_timer < 2:
-            move(0.3, 0)
+        if rospy.get_time() - pedestrian_timer < 1:
+            move(0.5, 0)
         else:
-            move(0, 0)
+            move(0.2, 0)
             state_change(State.OUTSIDE_LOOP)
-        pass
     show_image(cv_image)
 
 

@@ -13,7 +13,7 @@ import thread
 
 
 from plate_parse import plate_parse
-from pedestrian_dodger import get_bottom_red
+from pedestrian_dodger import get_bottom_red, is_movement
 from driving import getCentroid, pidCalc
 
 from enum import Enum
@@ -52,8 +52,18 @@ def move(linear, angular):
 
     move_pub.publish(move)
 
+# Changes State, use this instead of directly setting state
+# to keep track of state change
+# destState: State to change to
+def state_change(destState):
+    global state
+    state = destState
+    print(state)
+
+pedestrian_timer = 0
 def image_callback(img_msg):
     global state
+    global pedestrian_timer
     try:
         cv_image = bridge.imgmsg_to_cv2(img_msg, "passthrough")
     except CvBridgeError, e:
@@ -65,7 +75,7 @@ def image_callback(img_msg):
     height, width, _ = hsv.shape
 
     if state == State.STARTUP:
-        state = State.OUTSIDE_LOOP
+        state_change(State.OUTSIDE_LOOP)
     if state == State.OUTSIDE_LOOP:
         # Get Centroid
         cX, cY = getCentroid(hsv)
@@ -73,9 +83,10 @@ def image_callback(img_msg):
 
         # Check for red line
         bottom_red = get_bottom_red(hsv)
-        if bottom_red > hsv.shape[1] - 100:
+        print(bottom_red)
+        if bottom_red > hsv.shape[0] - 100:
             move(0, 0)
-            state = State.PEDESTRIAN_STOP
+            state_change(State.PEDESTRIAN_STOP)
             print('stopped')
             return
 
@@ -84,8 +95,16 @@ def image_callback(img_msg):
         move(0.1, pid)
 
     elif state == State.PEDESTRIAN_STOP:
+        if not is_movement(cv_image):
+            state_change(State.PEDESTRIAN_RUN)
+            pedestrian_timer = rospy.get_time()
         pass
     elif state == State.PEDESTRIAN_RUN:
+        if rospy.get_time() - pedestrian_timer < 2:
+            move(0.3, 0)
+        else:
+            move(0, 0)
+            state_change(State.OUTSIDE_LOOP)
         pass
     show_image(cv_image)
 

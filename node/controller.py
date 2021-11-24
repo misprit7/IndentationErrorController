@@ -15,6 +15,17 @@ import thread
 from plate_parse import plate_parse
 from pedestrian_dodger import get_bottom_red
 
+from enum import Enum
+
+class State(Enum):
+  STARTUP = auto()
+  OUTSIDE_LOOP = auto()
+  INSIDE_LOOP = auto()
+  PEDESTRIAN_STOP = auto()
+  PEDESTRIAN_RUN = auto()
+
+state = State.STARTUP
+
 bridge = CvBridge()
 
 # Init node

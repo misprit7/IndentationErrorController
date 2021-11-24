@@ -14,15 +14,16 @@ import thread
 
 from plate_parse import plate_parse
 from pedestrian_dodger import get_bottom_red
+from driving import getCentroid, pidCalc
 
 from enum import Enum
 
 class State(Enum):
-  STARTUP = auto()
-  OUTSIDE_LOOP = auto()
-  INSIDE_LOOP = auto()
-  PEDESTRIAN_STOP = auto()
-  PEDESTRIAN_RUN = auto()
+  STARTUP = 1
+  OUTSIDE_LOOP = 2
+  INSIDE_LOOP = 3
+  PEDESTRIAN_STOP = 4
+  PEDESTRIAN_RUN = 5
 
 state = State.STARTUP
 
@@ -35,11 +36,24 @@ rate = rospy.Rate(2)
 move_pub = rospy.Publisher('/R1/cmd_vel', Twist, 
   queue_size=1)
 
+# Shows an image
+# img: an image in opencv format in BGR formatting
 def show_image(img):
     cv2.imshow("Image Window", img)
     cv2.waitKey(3)
 
+# Publishes move with specified values
+# linear: linear speed to move
+# angular: angular speed to move
+def move(linear, angular):
+    move = Twist()
+    move.angular.z = angular
+    move.linear.x = linear
+
+    move_pub.publish(move)
+
 def image_callback(img_msg):
+    global state
     try:
         cv_image = bridge.imgmsg_to_cv2(img_msg, "passthrough")
     except CvBridgeError, e:
@@ -48,44 +62,34 @@ def image_callback(img_msg):
     cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
 
     hsv = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
-    frame_threshold = cv2.inRange(hsv, (0, 0, 80), (10, 10, 90))
+    height, width, _ = hsv.shape
 
-    height, width = frame_threshold.shape
+    if state == State.STARTUP:
+        state = State.OUTSIDE_LOOP
+    if state == State.OUTSIDE_LOOP:
+        # Get Centroid
+        cX, cY = getCentroid(hsv)
+        cv2.circle(cv_image, (cX, cY), 5, [255, 255, 255], -1)
 
-    M = cv2.moments(frame_threshold)
-    if M["m00"] == 0:
-      cX = width / 2
-      cY = height / 2
-    else:
-      cX = int(M["m10"] / M["m00"])
-      cY = int(M["m01"] / M["m00"])
+        # Check for red line
+        bottom_red = get_bottom_red(hsv)
+        if bottom_red > hsv.shape[1] - 100:
+            move(0, 0)
+            state = State.PEDESTRIAN_STOP
+            print('stopped')
+            return
 
-    cv2.circle(cv_image, (cX, cY), 5, [255, 255, 255], -1)
+
+        pid = pidCalc(2.0 * cX / width - 1)
+        move(0.1, pid)
+
+    elif state == State.PEDESTRIAN_STOP:
+        pass
+    elif state == State.PEDESTRIAN_RUN:
+        pass
     show_image(cv_image)
 
-    bottom_red = get_bottom_red(hsv)
-    print(bottom_red)
-    if bottom_red > hsv.shape[1] - 400:
-      move = Twist()
-      move.angular.z = 0
-      move.linear.x = 0
-      move_pub.publish(move)
-      print('stopped')
-      return
 
-    wP = 1
-    wI = 1
-    wD = 1
-
-    p = -(2.0 * cX / width - 1) * wP
-
-    pid = p
-
-    move = Twist()
-    move.angular.z = p
-    move.linear.x = 0.1
-
-    move_pub.publish(move)
 
     # plate_img = plate_parse(cv_image, 600, 300)
 
@@ -101,7 +105,6 @@ def image_callback(img_msg):
     # show_image(thresh2)
 
     plate = plate_parse(cv_image, 600, 300)
-    print(plate)
 
 
 image_sub = rospy.Subscriber("/R1/pi_camera/image_raw",Image,image_callback)

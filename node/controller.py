@@ -100,7 +100,7 @@ def image_callback(img_msg):
     elif state == State.PEDESTRIAN_STOP:
         if not is_movement(cv_image):
             if pedestrian_no_move_counter > 5:
-                # state_change(State.PEDESTRIAN_RUN)
+                state_change(State.PEDESTRIAN_RUN)
                 pedestrian_timer = rospy.get_time()
                 pedestrian_no_move_counter = 0 
             else:

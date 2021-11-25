@@ -1,32 +1,35 @@
 import cv2
 import numpy as np
+import numpy
+
+
 # import keras
 # from keras.models import Sequential
 # from keras.layers import Dense
 # from keras.models import model_from_json
-# import h5py
-import numpy
+import h5py
 
-# from keras.utils import CustomObjectScope
+import tensorflow as tf
+from tensorflow.keras import models
+from tensorflow.python.keras.backend import set_session
+from tensorflow.python.keras.models import load_model
 
-# from keras.initializers import glorot_uniform
+sess1 = tf.Session()    
+graph1 = tf.get_default_graph()
+set_session(sess1)
 
-# with CustomObjectScope({'GlorotUniform': glorot_uniform()}):
-#     json_file = open('/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model.json', 'r')
-#     loaded_model_json = json_file.read()
-#     json_file.close()
-#     loaded_model = model_from_json(loaded_model_json)
-#     # load weights into new model
-#     loaded_model.load_weights("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model.h5")
+# load json
+json_file = open('/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model.json', 'r')
+loaded_model_json = json_file.read()
+json_file.close()
+loaded_model = models.model_from_json(loaded_model_json)
+# load weights into new model
+loaded_model.load_weights("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model.h5")
+# loaded_model = models.load_model("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model.h5")
 
-# json_file = open('/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model.json', 'r')
-# loaded_model_json = json_file.read()
-# json_file.close()
-# loaded_model = keras.models.model_from_json(loaded_model_json)
-# # load weights into new model
-# loaded_model.load_weights("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model.h5")
-
-# loaded_model = keras.models.load_model('/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model.h5')
+encoder = {}
+[encoder.update({chr(i):i-65}) for i in range(65, 91)]
+[encoder.update({chr(i):i-22}) for i in range(48, 58)]
 
 def comp_h(tup):
     return tup[1]
@@ -46,16 +49,25 @@ def assemble_box(top_box, bottom_box):
     return pts
 
 def parse(license):
-    predicted = ""
-  
-    # for i in [40, 145, 350, 455]:
-    #     piece = np.array(license.crop((i, 100, i + 105, 250)))
-    #     piece_aug = np.expand_dims(piece, axis=0)
-    #     prediction = conv_model.predict(piece_aug)[0]
-    #     predicted += decode(prediction)
+    global loaded_model
+    global sess1
+    global graph1
+    predicted = []
+    cv2.imshow("license", license)
+    with graph1.as_default():
+        set_session(sess1)
+        for i in [40, 145, 350, 455]:
+            piece = license[100:250, i:i+105]
+            piece = cv2.cvtColor(piece, cv2.COLOR_RGB2BGR)
+            piece_aug = np.expand_dims(piece, axis=0)
+            prediction = loaded_model.predict(piece_aug)[0]
+            predicted += decode(prediction)
 
     return predicted
 
+def decode(encoded):
+    encoder_keys = list(encoder.keys())
+    return encoder_keys[np.argmax(encoded)]
 
 # Parses image
 # image: image of the road to parse

@@ -25,6 +25,7 @@ json_file.close()
 loaded_model = models.model_from_json(loaded_model_json)
 # load weights into new model
 loaded_model.load_weights("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model.h5")
+# loaded_model = models.load_model("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model.h5")
 
 encoder = {}
 [encoder.update({chr(i):i-65}) for i in range(65, 91)]
@@ -52,13 +53,14 @@ def parse(license):
     global sess1
     global graph1
     predicted = []
+    cv2.imshow("license", license)
     with graph1.as_default():
         set_session(sess1)
         for i in [40, 145, 350, 455]:
             piece = license[100:250, i:i+105]
+            piece = cv2.cvtColor(piece, cv2.COLOR_RGB2BGR)
             piece_aug = np.expand_dims(piece, axis=0)
             prediction = loaded_model.predict(piece_aug)[0]
-            print(prediction)
             predicted += decode(prediction)
 
     return predicted

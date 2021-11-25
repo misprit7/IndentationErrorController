@@ -1,32 +1,32 @@
 import cv2
 import numpy as np
-# import keras
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.models import model_from_json
 import h5py
 import numpy
 
-from keras.utils import CustomObjectScope
 
-from keras.initializers import glorot_uniform
+# with CustomObjectScope({'GlorotUniform': glorot_uniform()}):
+#     json_file = open('/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model.json', 'r')
+#     loaded_model_json = json_file.read()
+#     json_file.close()
+#     loaded_model = model_from_json(loaded_model_json)
+#     # load weights into new model
+#     loaded_model.load_weights("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model.h5")
 
-with CustomObjectScope({'GlorotUniform': glorot_uniform()}):
-    json_file = open('/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model.json', 'r')
-    loaded_model_json = json_file.read()
-    json_file.close()
-    loaded_model = model_from_json(loaded_model_json)
-    # load weights into new model
-    loaded_model.load_weights("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model.h5")
+json_file = open('/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model.json', 'r')
+loaded_model_json = json_file.read()
+json_file.close()
+loaded_model = model_from_json(loaded_model_json)
+# load weights into new model
+loaded_model.load_weights("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model.h5")
 
-# json_file = open('/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model.json', 'r')
-# loaded_model_json = json_file.read()
-# json_file.close()
-# loaded_model = keras.models.model_from_json(loaded_model_json)
-# # load weights into new model
-# loaded_model.load_weights("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model.h5")
+loaded_model = load_model('/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model.h5')
 
-# loaded_model = keras.models.load_model('/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model.h5')
+encoder = {}
+[encoder.update({chr(i):i - 65}) for i in range(65,91)]
+[encoder.update({chr(i):i - 22}) for i in range(48,58)]
 
 def comp_h(tup):
     return tup[1]
@@ -55,6 +55,12 @@ def parse(license):
         predicted += decode(prediction)
 
     return predicted
+
+def decode(encoded):
+
+  encoder_keys = list(encoder.keys())
+
+  return encoder_keys[np.argmax(encoded)]
 
 
 # Parses image

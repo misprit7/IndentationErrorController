@@ -85,16 +85,17 @@ def image_callback(img_msg):
 
         # Check for red line
         bottom_red = get_bottom_red(hsv)
-        print(bottom_red)
         if bottom_red > hsv.shape[0] - 100:
             move(0, 0)
             state_change(State.PEDESTRIAN_STOP)
-            print('stopped')
             return
 
 
         pid = pidCalc(2.0 * cX / width - 1)
         move(0.1, pid)
+
+        plate = plate_parse(cv_image, 600, 300)
+        print(plate)
 
     elif state == State.PEDESTRIAN_STOP:
         if not is_movement(cv_image):
@@ -127,7 +128,6 @@ def image_callback(img_msg):
     # show_image(thresh1)
     # show_image(thresh2)
 
-    plate = plate_parse(cv_image, 600, 300)
 
 
 image_sub = rospy.Subscriber("/R1/pi_camera/image_raw",Image,image_callback)

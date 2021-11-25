@@ -14,7 +14,7 @@ import thread
 
 from plate_parse import plate_parse
 from pedestrian_dodger import get_bottom_red, is_movement
-from driving import getCentroid, pidCalc
+from driving import getRightLine, pidCalc
 
 from enum import Enum
 
@@ -24,6 +24,7 @@ class State(Enum):
   INSIDE_LOOP = 3
   PEDESTRIAN_STOP = 4
   PEDESTRIAN_RUN = 5
+  TURN_INTO_LOOP = 6
 
 state = State.STARTUP
 
@@ -79,9 +80,9 @@ def image_callback(img_msg):
     if state == State.STARTUP:
         state_change(State.OUTSIDE_LOOP)
     if state == State.OUTSIDE_LOOP:
-        # Get Centroid
-        cX, cY = getCentroid(hsv)
-        cv2.circle(cv_image, (cX, cY), 5, [255, 255, 255], -1)
+        # Get Centroid of right side white line
+        cX, cY = getRightLine(hsv)
+        cv2.circle(cv_image, (cX, cY), 5, [0, 255, 0], -1)
 
         # Check for red line
         bottom_red = get_bottom_red(hsv)
@@ -93,7 +94,7 @@ def image_callback(img_msg):
             return
 
 
-        pid = pidCalc(2.0 * cX / width - 1)
+        pid = pidCalc(2.0 * (cX - 4 * width / 5) / width)
         move(0.1, pid)
 
     elif state == State.PEDESTRIAN_STOP:
@@ -110,6 +111,9 @@ def image_callback(img_msg):
         else:
             move(0.2, 0)
             state_change(State.OUTSIDE_LOOP)
+
+    elif state == State.TURN_INTO_LOOP:
+
     show_image(cv_image)
 
 

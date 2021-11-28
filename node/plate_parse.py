@@ -48,7 +48,7 @@ def assemble_box(top_box, bottom_box):
 
     return pts
 
-def parse(license):
+def license_parse(license):
     global loaded_model
     global sess1
     global graph1
@@ -65,6 +65,11 @@ def parse(license):
 
     return predicted
 
+def parking_parse(parking_stall):
+    print(parking_stall.shape)
+    num = parking_stall[210:370, 175:350]
+    cv2.imshow('Parking Stall', num)
+
 def decode(encoded):
     encoder_keys = list(encoder.keys())
     return encoder_keys[np.argmax(encoded)]
@@ -74,7 +79,7 @@ def decode(encoded):
 # width: width of returned image
 # height: height of returned image
 # returns: warped perspective image of plate, None if none found
-def plate_parse(image, width, height):
+def plate_parse(image):
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     #thresh = cv2.inRange(hsv, (0, 0, 100), (0, 255, 205))
     
@@ -125,13 +130,30 @@ def plate_parse(image, width, height):
     # pts = np.int0(pts)
     # return cv2.drawContours(image, [pts], 0, (0,255,0), 3)
 
+
+    license_height = 300
+    license_width = 600
+
+    license_dst = np.array([
+        [0, 0],
+        [license_width - 1, 0],
+        [license_width - 1, license_height - 1],
+        [0, license_height - 1]], dtype = "float32")
+
+    M1 = cv2.getPerspectiveTransform(pts, license_dst)
+    # return cv2.warpPerspective(image, M, (width, height))
+    license = cv2.warpPerspective(image, M1, (license_width, license_height))
+
+
+    parking_height = 400
+    parking_width = 350
+
     dst = np.array([
         [0, 0],
-        [width - 1, 0],
-        [width - 1, height - 1],
-        [0, height - 1]], dtype = "float32")
+        [parking_width - 1, 0],
+        [parking_width - 1, parking_height - 1],
+        [0, parking_height - 1]], dtype = "float32")
 
-    M = cv2.getPerspectiveTransform(pts, dst)
-    # return cv2.warpPerspective(image, M, (width, height))
-    license = cv2.warpPerspective(image, M, (width, height))
-    return parse(license)
+    M2 = cv2.getPerspectiveTransform(assemble_box(top_box, top_box)[::-1], dst)
+    parking_stall = cv2.warpPerspective(image, M2, (parking_width, parking_height))
+    return parking_parse(parking_stall), license_parse(license)

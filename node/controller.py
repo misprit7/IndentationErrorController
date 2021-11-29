@@ -95,7 +95,7 @@ def image_callback(img_msg):
         pid = pidCalc(2.0 * (cX - 4 * width / 5) / width)
         move(0.1, pid)
 
-        plate = plate_parse(cv_image, 600, 300)
+        plate = plate_parse(cv_image)
         print(plate)
 
     elif state == State.PEDESTRIAN_STOP:
@@ -114,9 +114,7 @@ def image_callback(img_msg):
             state_change(State.OUTSIDE_LOOP)
 
     elif state == State.TURN_INTO_LOOP:
-
-    plate = plate_parse(cv_image, 600, 1800)
-    print(plate)
+        pass
 
     show_image(cv_image)
 

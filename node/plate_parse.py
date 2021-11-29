@@ -50,13 +50,12 @@ def assemble_box(top_box, bottom_box):
 
     return pts
 
-
-def parse(license):
+def license_parse(license):
     global loaded_model
     global sess1
     global graph1
     predicted = []
-    license = license[1249:1550]
+    license = license[1250:1551]
     cv2.imshow("license", license)
 
     with graph1.as_default():
@@ -69,6 +68,11 @@ def parse(license):
             predicted += decode(prediction)
 
     return predicted
+
+def parking_parse(parking_stall):
+    parking_stall = parking_stall[700:1151, 300:]
+    cv2.imshow('Parking Stall', parking_stall)
+    # cv2.imwrite('/home/fizzer/ros_ws/src/indentation_error_controller/test/parking_num.png', parking_stall)
 
 def decode(encoded):
     encoder_keys = list(encoder.keys())
@@ -93,7 +97,7 @@ def plate_parse(image):
     kernel = np.ones((3, 3), np.uint8)
     img_erosion = cv2.erode(thresh, kernel, iterations=1)
     img_dilation = cv2.dilate(img_erosion, kernel, iterations=1)
-    cv2.imshow("dilate", img_dilation)
+    # cv2.imshow("dilate", img_dilation)
 
     _,contours,hierarchy = cv2.findContours(img_dilation, 1, 2)
     if len(contours) < 2:
@@ -119,6 +123,11 @@ def plate_parse(image):
     pts = assemble_box(top_box, bottom_box)
 
 
+
+
+    height = 1800
+    width = 600
+
     dst = np.array([
         [0, 0],
         [width - 1, 0],
@@ -126,6 +135,8 @@ def plate_parse(image):
         [0, height - 1]], dtype = "float32")
 
     M = cv2.getPerspectiveTransform(pts, dst)
+    # return cv2.warpPerspective(image, M, (width, height))
     license = cv2.warpPerspective(image, M, (width, height))
 
-    return parse(license)
+
+    return parking_parse(license), license_parse(license)

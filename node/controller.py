@@ -14,7 +14,7 @@ import thread
 
 from plate_parse import plate_parse
 from pedestrian_dodger import get_bottom_red, is_movement
-from driving import getRightLine, pidCalc
+from driving import getRightLine, getLeftLine, getCentroid, pidCalc
 
 from enum import Enum
 
@@ -78,7 +78,8 @@ def image_callback(img_msg):
     height, width, _ = hsv.shape
 
     if state == State.STARTUP:
-        state_change(State.OUTSIDE_LOOP)
+        # state_change(State.OUTSIDE_LOOP)
+        state_change(State.INSIDE_LOOP)
     if state == State.OUTSIDE_LOOP:
         # Get Centroid of right side white line
         cX, cY = getRightLine(hsv)
@@ -95,7 +96,7 @@ def image_callback(img_msg):
         pid = pidCalc(2.0 * (cX - 4 * width / 5) / width)
         move(0.1, pid)
 
-        plate = plate_parse(cv_image, 600, 300)
+        plate = plate_parse(cv_image)
         print(plate)
 
     elif state == State.PEDESTRIAN_STOP:
@@ -114,26 +115,20 @@ def image_callback(img_msg):
             state_change(State.OUTSIDE_LOOP)
 
     elif state == State.TURN_INTO_LOOP:
+        pass
 
-    plate = plate_parse(cv_image, 600, 1800)
-    print(plate)
+    elif state == State.INSIDE_LOOP:
+        cX, cY = getCentroid(hsv)
+        cv2.circle(cv_image, (cX, cY), 5, [0, 255, 0], -1)
+
+        pid = pidCalc(2.0 * (cX - width / 2) / width)
+        move(0.1, pid)
+
+        plate = plate_parse(cv_image)
+        print(plate)
+
 
     show_image(cv_image)
-
-
-
-    # plate_img = plate_parse(cv_image, 600, 300)
-
-    # if not (plate_img is None):
-    #   show_image(plate_img)
-
-
-    #   cv2.imwrite('/home/fizzer/Pictures/plate_image.png',plate_img)
-
-    # thresh1 = cv2.inRange(hsv, (0, 0, 100), (0, 255, 125))
-    # thresh2 = cv2.inRange(hsv, (0, 0, 180), (0, 255, 205))
-    # show_image(thresh1)
-    # show_image(thresh2)
 
 
 

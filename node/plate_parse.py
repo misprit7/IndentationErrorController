@@ -93,7 +93,6 @@ def plate_parse(image):
     kernel = np.ones((3, 3), np.uint8)
     img_erosion = cv2.erode(thresh, kernel, iterations=1)
     img_dilation = cv2.dilate(img_erosion, kernel, iterations=1)
-    cv2.imshow("dilate", img_dilation)
 
     _,contours,hierarchy = cv2.findContours(img_dilation, 1, 2)
     if len(contours) < 2:
@@ -116,7 +115,9 @@ def plate_parse(image):
     bottom_box = cv2.boxPoints(cv2.minAreaRect(bottom_cnt))
 
 
-    pts = assemble_box(top_box, bottom_box)
+    pts = assemble_box(op_box, bottom_box)
+
+    cv2.drawContours(image, np.int0([pts]), 0, (0, 255, 0), 3)
 
 
     dst = np.array([

@@ -19,10 +19,62 @@ def getCentroid(hsv):
 
     return cX, cY
 
+def getCX(cnt, width):
+    M = cv2.moments(cnt)
+
+    if M["m00"] == 0:
+        cX = 0
+    else:
+        cX = int(M["m10"] / M["m00"])
+    return cX
+
+def getCY(cnt, width):
+    M = cv2.moments(cnt)
+
+    if M["m00"] == 0:
+        cY = 4 * width / 5
+    else:
+        cY = int(M["m01"] / M["m00"])
+    return cY
+
+def getRightLine(hsv):
+    frame_threshold = cv2.inRange(hsv, (0, 0, 235), (108, 255, 255))
+
+    height, width = frame_threshold.shape
+
+    _,contours,hierarchy = cv2.findContours(frame_threshold, 1, 2)
+
+    cX = 4 * width / 5
+    cY = 4 * width / 5
+
+    if len(contours) > 0:
+        right_line = max(contours, key=lambda cnt : getCX(cnt, width))
+        cX = getCX(right_line, width)
+
+    return cX, cY
+
+def getLeftLine(hsv):
+    frame_threshold = cv2.inRange(hsv, (0, 0, 235), (108, 255, 255))
+
+    height, width = frame_threshold.shape
+
+    _,contours,hierarchy = cv2.findContours(frame_threshold[:,:width/2], 1, 2)
+
+    cX = 1 * width / 5
+    cY = 4 * width / 5
+
+    if len(contours) > 0:
+        sort = sorted(contours, key=lambda cnt : getCX(cnt, width), reverse=True)
+        left_line = max(sort, key=lambda cnt : getCX(cnt, width))
+
+        cX = getCX(left_line, width)
+
+    return cX, cY
+
 # Calculates pid from error
 # err: Error of prediction
 def pidCalc(err):
-    wP = 1.0
+    wP = 2.0
     wI = 1.0
     wD = 1.0
 

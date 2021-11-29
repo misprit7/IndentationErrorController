@@ -14,6 +14,7 @@ from tensorflow.keras import models
 from tensorflow.python.keras.backend import set_session
 from tensorflow.python.keras.models import load_model
 
+
 sess1 = tf.Session()    
 graph1 = tf.get_default_graph()
 set_session(sess1)
@@ -31,6 +32,7 @@ encoder = {}
 [encoder.update({chr(i):i-65}) for i in range(65, 91)]
 [encoder.update({chr(i):i-22}) for i in range(48, 58)]
 
+
 def comp_h(tup):
     return tup[1]
 
@@ -38,8 +40,8 @@ def comp_x(tup):
     return tup[0]
 
 def assemble_box(top_box, bottom_box):
-    top_line = sorted(top_box, key = comp_h, reverse = True)[:2]
-    bottom_line = sorted(bottom_box, key = comp_h, reverse = False)[:2]
+    top_line = sorted(top_box, key = comp_h, reverse = False)[:2]
+    bottom_line = sorted(bottom_box, key = comp_h, reverse = True)[:2]
 
     top_line = sorted(top_line, key = comp_x, reverse = False)
     bottom_line = sorted(bottom_line, key = comp_x, reverse = True)
@@ -48,12 +50,15 @@ def assemble_box(top_box, bottom_box):
 
     return pts
 
+
 def parse(license):
     global loaded_model
     global sess1
     global graph1
     predicted = []
+    license = license[1249:1550]
     cv2.imshow("license", license)
+
     with graph1.as_default():
         set_session(sess1)
         for i in [40, 145, 350, 455]:
@@ -74,18 +79,21 @@ def decode(encoded):
 # width: width of returned image
 # height: height of returned image
 # returns: warped perspective image of plate, None if none found
-def plate_parse(image, width, height):
+def plate_parse(image):
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-    #thresh = cv2.inRange(hsv, (0, 0, 100), (0, 255, 205))
+    width = 600
+    height = 1800
     
     thresh1 = cv2.inRange(hsv, (0, 0, 100), (0, 255, 125))
     thresh2 = cv2.inRange(hsv, (0, 0, 180), (0, 255, 205))
+
 
     thresh = max([thresh1, thresh2], key = cv2.countNonZero)
 
     kernel = np.ones((3, 3), np.uint8)
     img_erosion = cv2.erode(thresh, kernel, iterations=1)
     img_dilation = cv2.dilate(img_erosion, kernel, iterations=1)
+    cv2.imshow("dilate", img_dilation)
 
     _,contours,hierarchy = cv2.findContours(img_dilation, 1, 2)
     if len(contours) < 2:
@@ -111,20 +119,6 @@ def plate_parse(image, width, height):
     pts = assemble_box(top_box, bottom_box)
 
 
-    # pts = np.concatenate([top_box[2:4], bottom_box[0:2]])
-
-
-    # is box good????? Check
-
-    # if abs(top_box[0][0] - bottom_box[1][0]) > 30:
-    #     return None
-
-    # if abs(top_box[1][0] - bottom_box[0][0]) > 30:
-    #     return None
-
-    # pts = np.int0(pts)
-    # return cv2.drawContours(image, [pts], 0, (0,255,0), 3)
-
     dst = np.array([
         [0, 0],
         [width - 1, 0],
@@ -132,6 +126,6 @@ def plate_parse(image, width, height):
         [0, height - 1]], dtype = "float32")
 
     M = cv2.getPerspectiveTransform(pts, dst)
-    # return cv2.warpPerspective(image, M, (width, height))
     license = cv2.warpPerspective(image, M, (width, height))
+
     return parse(license)

@@ -113,7 +113,10 @@ def image_callback(img_msg):
             move(0.2, 0)
             state_change(State.OUTSIDE_LOOP)
 
-    # elif state == State.TURN_INTO_LOOP:
+    elif state == State.TURN_INTO_LOOP:
+
+    plate = plate_parse(cv_image, 600, 1800)
+    print(plate)
 
     show_image(cv_image)
 

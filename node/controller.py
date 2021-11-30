@@ -117,6 +117,7 @@ def image_callback(img_msg):
     elif state == State.TURN_INTO_LOOP:
         pass
 
+
     elif state == State.INSIDE_LOOP:
         cX, cY = getCentroid(hsv)
         cv2.circle(cv_image, (cX, cY), 5, [0, 255, 0], -1)

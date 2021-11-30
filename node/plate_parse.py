@@ -94,26 +94,34 @@ def plate_parse(image):
 
     thresh = max([thresh1, thresh2], key = cv2.countNonZero)
 
-    kernel = np.ones((3, 3), np.uint8)
+    kernel = np.ones((2, 2), np.uint8)
     img_erosion = cv2.erode(thresh, kernel, iterations=1)
     img_dilation = cv2.dilate(img_erosion, kernel, iterations=1)
 
+    cv2.imshow('contours', img_dilation)
 
     _,contours,hierarchy = cv2.findContours(img_dilation, 1, 2)
     if len(contours) < 2:
+        print("Not enough contours")
         return (None, None)
 
     top_cnt_index = max(range(len(contours)), key=lambda i: cv2.contourArea(contours[i]))
     top_cnt = contours[top_cnt_index]
-    if cv2.contourArea(top_cnt) < 2000 or cv2.contourArea(top_cnt) > 8000:
+    if cv2.contourArea(top_cnt) < 1500 or cv2.contourArea(top_cnt) > 8000:
+        print('Contours outside of range')
         return (None, None)
     contours.pop(top_cnt_index)
 
     bottom_cnt = max(contours, key = cv2.contourArea)
 
+
+    # cv2.drawContours(image, np.int0([top_cnt]), 0, (0, 255, 0), 3)
+    # cv2.drawContours(image, np.int0([bottom_cnt]), 0, (0, 0, 255), 3)
+
     ratio = cv2.contourArea(top_cnt)/cv2.contourArea(bottom_cnt)
 
     if ratio < 5 or ratio > 6:
+        print("Wrong contour ratio")
         return (None, None)
 
     top_box = cv2.boxPoints(cv2.minAreaRect(top_cnt))
@@ -122,9 +130,8 @@ def plate_parse(image):
 
     pts = assemble_box(top_box, bottom_box)
 
+
     # cv2.drawContours(image, np.int0([pts]), 0, (0, 255, 0), 3)
-
-
 
 
     height = 1800

@@ -8,6 +8,8 @@ def getCentroid(hsv):
     frame_threshold = cv2.inRange(hsv, (0, 0, 80), (10, 10, 90))
 
     height, width = frame_threshold.shape
+    frame_threshold = frame_threshold[:, 2*width/9:]
+    cv2.imshow("thresh", frame_threshold)
 
     M = cv2.moments(frame_threshold)
     if M["m00"] == 0:
@@ -17,7 +19,7 @@ def getCentroid(hsv):
         cX = int(M["m10"] / M["m00"])
         cY = int(M["m01"] / M["m00"])
 
-    return cX, cY
+    return cX + 2*width/9, cY
 
 def getCX(cnt, width):
     M = cv2.moments(cnt)
@@ -71,6 +73,8 @@ def getLeftLine(hsv):
         # cv2.imshow('Left Line', cv2.drawContours(hsv, [left_line], 0, (255, 0, 0), 3))
 
         cX = getCX(left_line, width)
+
+
 
     return cX, cY
 

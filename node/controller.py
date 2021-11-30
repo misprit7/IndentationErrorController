@@ -84,8 +84,8 @@ def image_callback(img_msg):
     height, width, _ = hsv.shape
 
     if state == State.STARTUP:
-        # state_change(State.OUTSIDE_LOOP)
-        state_change(State.INITIAL_TURN)
+        state_change(State.OUTSIDE_LOOP)
+        # state_change(State.INITIAL_TURN)
         move(0, 0)
         timer = rospy.get_time()
 
@@ -109,6 +109,7 @@ def image_callback(img_msg):
 
         pid = pidCalc(2.0 * (cX - 4 * width / 5) / width, 2.0, 1.0, 1.0)
         move(0.1, pid)
+        # move(0, 0)
 
         parking_num, plate = plate_parse(cv_image)
         print(plate)

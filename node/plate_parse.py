@@ -56,16 +56,32 @@ def license_parse(license):
     global graph1
     predicted = []
     license = license[1250:1551]
-    cv2.imshow("license", license)
 
-    with graph1.as_default():
-        set_session(sess1)
-        for i in [40, 145, 350, 455]:
-            piece = license[100:250, i:i+105]
-            piece = cv2.cvtColor(piece, cv2.COLOR_RGB2BGR)
-            piece_aug = np.expand_dims(piece, axis=0)
-            prediction = loaded_model.predict(piece_aug)[0]
-            predicted += decode(prediction)
+    license_hsv = cv2.cvtColor(license, cv2.COLOR_BGR2HSV)
+    thresh = cv2.inRange(license_hsv, (106, 105, 84), (127, 255, 255))
+    _,contours,hierarchy = cv2.findContours(thresh, 1, 2)
+    contours = sorted(contours, key=cv2.contourArea)[::-1]
+
+    pieces = []
+    for i, cnt in enumerate(contours[0:4]):
+        # cv2.drawContours(license, np.int0([cnt]), 0, (0, 255, 0), 3)
+        x,y,w,h = cv2.boundingRect(cnt)
+        cv2.rectangle(license,(x,y),(x+w,y+h),(0,255,0),2)
+        piece = cv2.resize(license[y:y+h, x:x+w], (105, 150), interpolation = cv2.INTER_AREA)
+        pieces.append(piece)
+        cv2.imshow('pieces' + str(i), piece)
+
+    cv2.imshow("license", license)
+    # cv2.imwrite('/home/fizzer/ros_ws/src/indentation_error_controller/test/license.png', license)
+
+    # with graph1.as_default():
+    #     set_session(sess1)
+    #     for i in [40, 145, 350, 455]:
+    #         piece = license[100:250, i:i+105]
+    #         piece = cv2.cvtColor(piece, cv2.COLOR_RGB2BGR)
+    #         piece_aug = np.expand_dims(piece, axis=0)
+    #         prediction = loaded_model.predict(piece_aug)[0]
+    #         predicted += decode(prediction)
 
     return predicted
 
@@ -115,8 +131,8 @@ def plate_parse(image):
     bottom_cnt = max(contours, key = cv2.contourArea)
 
 
-    # cv2.drawContours(image, np.int0([top_cnt]), 0, (0, 255, 0), 3)
-    # cv2.drawContours(image, np.int0([bottom_cnt]), 0, (0, 0, 255), 3)
+    cv2.drawContours(image, np.int0([top_cnt]), 0, (0, 255, 0), 3)
+    cv2.drawContours(image, np.int0([bottom_cnt]), 0, (0, 0, 255), 3)
 
     ratio = cv2.contourArea(top_cnt)/cv2.contourArea(bottom_cnt)
 

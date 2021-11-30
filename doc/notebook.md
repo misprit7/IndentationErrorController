@@ -39,3 +39,5 @@ Xander Naumenko and Nader Kamali
   * Added state machine to keep track of what state the controller is in at every point
   * Implemented pedestrian dodging using background subtraction
     * https://www.geeksforgeeks.org/background-subtraction-opencv/
+* November 29 - December 1
+  * Got inside loop turning working

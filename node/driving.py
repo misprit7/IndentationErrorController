@@ -8,8 +8,8 @@ def getCentroid(hsv):
     frame_threshold = cv2.inRange(hsv, (0, 0, 80), (10, 10, 90))
 
     height, width = frame_threshold.shape
-    frame_threshold = frame_threshold[:, 2*width/9:]
-    cv2.imshow("thresh", frame_threshold)
+    frame_threshold = frame_threshold[:, int(2*width/9):]
+    # cv2.imshow("thresh", frame_threshold)
 
     M = cv2.moments(frame_threshold)
     if M["m00"] == 0:
@@ -80,10 +80,7 @@ def getLeftLine(hsv):
 
 # Calculates pid from error
 # err: Error of prediction
-def pidCalc(err):
-    wP = 2.0
-    wI = 1.0
-    wD = 1.0
+def pidCalc(err, wP, wI, wD):
 
     p = -err * wP
     i=0

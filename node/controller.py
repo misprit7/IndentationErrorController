@@ -1,22 +1,22 @@
 #! /usr/bin/env python
 
 import rospy
-
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Image
 
 import cv2
+import numpy as np
 from cv_bridge import CvBridge, CvBridgeError
 
 import os
 import thread
+from enum import Enum
 
 
 from plate_parse import plate_parse
 from pedestrian_dodger import get_bottom_red, is_movement
 from driving import getRightLine, getLeftLine, pidCalc, checkForCar, getCentroid
 
-from enum import Enum
 
 class State(Enum):
   STARTUP = 1
@@ -25,6 +25,8 @@ class State(Enum):
   PEDESTRIAN_STOP = 4
   PEDESTRIAN_RUN = 5
   TURN_INTO_LOOP = 6
+  LOOK_AROUND = 7
+  INITIAL_TURN = 8
 
 state = State.STARTUP
 
@@ -65,6 +67,7 @@ pedestrian_no_move_counter = 0
 timer = 0
 angle = 0
 plates = ['']*8
+lastCar = 0
 def image_callback(img_msg):
     global state
     global timer
@@ -82,8 +85,16 @@ def image_callback(img_msg):
 
     if state == State.STARTUP:
         # state_change(State.OUTSIDE_LOOP)
-        state_change(State.OUTSIDE_LOOP)
-    if state == State.OUTSIDE_LOOP:
+        state_change(State.INITIAL_TURN)
+        move(0, 0)
+        timer = rospy.get_time()
+
+    elif state == State.INITIAL_TURN:
+        move(0.2, 0.5)
+        if rospy.get_time() - timer > 1:
+            state_change(State.OUTSIDE_LOOP)
+
+    elif state == State.OUTSIDE_LOOP:
         # Get Centroid of right side white line
         cX, cY = getRightLine(hsv)
         cv2.circle(cv_image, (cX, cY), 5, [0, 255, 0], -1)
@@ -96,46 +107,72 @@ def image_callback(img_msg):
             return
 
 
-        pid = pidCalc(2.0 * (cX - 4 * width / 5) / width)
+        pid = pidCalc(2.0 * (cX - 4 * width / 5) / width, 2.0, 1.0, 1.0)
         move(0.1, pid)
 
         parking_num, plate = plate_parse(cv_image)
         print(plate)
 
-        if True:
-            timer = rospy.get_time()
-            print(timer)
-            state_change(State.TURN_INTO_LOOP)
+        # if True:
+        #     timer = rospy.get_time()
+        #     print(timer)
+        #     state_change(State.TURN_INTO_LOOP)
 
     elif state == State.TURN_INTO_LOOP:
-        if checkForCar(hsv):
+        global lastCar
+        print(rospy.get_time() - lastCar)
+        carInFront = checkForCar(hsv)
+        if rospy.get_time() - lastCar < 1 or carInFront:
             # Wait until car passes
             print("Waiting for car...")
             move(0, 0)
             timer = rospy.get_time()
+            if carInFront:
+                lastCar = rospy.get_time()
         else:
             global angle
             cX, cY = getRightLine(hsv[2*height/3:, :width/2])
             cv2.circle(cv_image, (cX, cY), 5, [0, 255, 0], -1)
 
-            pid = pidCalc(2.0 * (cX - 1 * width / 5) / width)
+            pid = pidCalc(2.0 * (cX - 1 * width / 5) / width, 4.0, 1.0, 1.0)
             
-            move(0.1, pid)
+            move(0.3, pid)
             angle += pid * (rospy.get_time() - timer)
-            print(angle)
+            # print(angle)
             timer = rospy.get_time()
-            if angle > 3:
+            if angle > 3.5:
                 state_change(State.INSIDE_LOOP)
+                # Sets the timer negative so first loop triggers turning
+                timer = -20
 
     elif state == State.INSIDE_LOOP:
         cX, cY = getCentroid(hsv)
         cv2.circle(cv_image, (cX, cY), 5, [0, 255, 0], -1)
 
-        pid = pidCalc(2.0 * (cX - width / 2) / width)
-        move(0.15, pid)
+        pid = pidCalc(2.0 * (cX - width / 2) / width, 3.0, 1.0, 1.0)
+        # move(0, 0)
+        print(pid)
+        move(0.3, pid)
 
-        plate = plate_parse(cv_image)
-        print(plate)
+        # print(plate)
+
+        if np.abs(pid) > 0.6 and rospy.get_time() - timer > 7:
+            state_change(State.LOOK_AROUND)
+            timer = rospy.get_time()
+
+    elif state == State.LOOK_AROUND:
+        if rospy.get_time() - timer > 2:
+            state_change(State.INSIDE_LOOP)
+            timer = rospy.get_time()
+        elif rospy.get_time() - timer > 1.25:
+            move(0, 1)
+        elif rospy.get_time() - timer > 0.75:
+            move(0, 0)
+        else: 
+            move(0, -1)
+
+        parking_num, plate = plate_parse(cv_image)
+
 
     elif state == State.PEDESTRIAN_STOP:
         if not is_movement(cv_image):

@@ -14,7 +14,7 @@ import thread
 
 from plate_parse import plate_parse
 from pedestrian_dodger import get_bottom_red, is_movement
-from driving import getRightLine, getLeftLine, getCentroid, pidCalc
+from driving import getRightLine, getLeftLine, pidCalc, checkForCar, getCentroid
 
 from enum import Enum
 
@@ -62,11 +62,14 @@ def state_change(destState):
     print(state)
 
 pedestrian_no_move_counter = 0
-pedestrian_timer = 0
+timer = 0
+angle = 0
+plates = ['']*8
 def image_callback(img_msg):
     global state
-    global pedestrian_timer
+    global timer
     global pedestrian_no_move_counter
+    global plates
     try:
         cv_image = bridge.imgmsg_to_cv2(img_msg, "passthrough")
     except CvBridgeError, e:
@@ -79,7 +82,7 @@ def image_callback(img_msg):
 
     if state == State.STARTUP:
         # state_change(State.OUTSIDE_LOOP)
-        state_change(State.INSIDE_LOOP)
+        state_change(State.OUTSIDE_LOOP)
     if state == State.OUTSIDE_LOOP:
         # Get Centroid of right side white line
         cX, cY = getRightLine(hsv)
@@ -96,6 +99,41 @@ def image_callback(img_msg):
         pid = pidCalc(2.0 * (cX - 4 * width / 5) / width)
         move(0.1, pid)
 
+        parking_num, plate = plate_parse(cv_image)
+        print(plate)
+
+        if True:
+            timer = rospy.get_time()
+            print(timer)
+            state_change(State.TURN_INTO_LOOP)
+
+    elif state == State.TURN_INTO_LOOP:
+        if checkForCar(hsv):
+            # Wait until car passes
+            print("Waiting for car...")
+            move(0, 0)
+            timer = rospy.get_time()
+        else:
+            global angle
+            cX, cY = getRightLine(hsv[2*height/3:, :width/2])
+            cv2.circle(cv_image, (cX, cY), 5, [0, 255, 0], -1)
+
+            pid = pidCalc(2.0 * (cX - 1 * width / 5) / width)
+            
+            move(0.1, pid)
+            angle += pid * (rospy.get_time() - timer)
+            print(angle)
+            timer = rospy.get_time()
+            if angle > 3:
+                state_change(State.INSIDE_LOOP)
+
+    elif state == State.INSIDE_LOOP:
+        cX, cY = getCentroid(hsv)
+        cv2.circle(cv_image, (cX, cY), 5, [0, 255, 0], -1)
+
+        pid = pidCalc(2.0 * (cX - width / 2) / width)
+        move(0.15, pid)
+
         plate = plate_parse(cv_image)
         print(plate)
 
@@ -103,40 +141,26 @@ def image_callback(img_msg):
         if not is_movement(cv_image):
             if pedestrian_no_move_counter > 5:
                 state_change(State.PEDESTRIAN_RUN)
-                pedestrian_timer = rospy.get_time()
+                timer = rospy.get_time()
                 pedestrian_no_move_counter = 0 
             else:
                 pedestrian_no_move_counter += 1
     elif state == State.PEDESTRIAN_RUN:
-        if rospy.get_time() - pedestrian_timer < 1:
+        if rospy.get_time() - timer < 1:
             move(0.5, 0)
         else:
             move(0.2, 0)
             state_change(State.OUTSIDE_LOOP)
-
-    elif state == State.TURN_INTO_LOOP:
-        pass
-
-
-    elif state == State.INSIDE_LOOP:
-        cX, cY = getCentroid(hsv)
-        cv2.circle(cv_image, (cX, cY), 5, [0, 255, 0], -1)
-
-        pid = pidCalc(2.0 * (cX - width / 2) / width)
-        move(0.1, pid)
-
-        plate = plate_parse(cv_image)
-        print(plate)
 
 
     show_image(cv_image)
 
 
 
+rospy.sleep(0.1)
 image_sub = rospy.Subscriber("/R1/pi_camera/image_raw",Image,image_callback)
 velocity_pub = rospy.Publisher('/R1/cmd_vel', Twist, 
   queue_size=1)
-
 
 while not rospy.is_shutdown():
     rate.sleep()

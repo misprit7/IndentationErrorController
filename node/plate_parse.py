@@ -101,12 +101,12 @@ def plate_parse(image):
 
     _,contours,hierarchy = cv2.findContours(img_dilation, 1, 2)
     if len(contours) < 2:
-        return None
+        return (None, None)
 
     top_cnt_index = max(range(len(contours)), key=lambda i: cv2.contourArea(contours[i]))
     top_cnt = contours[top_cnt_index]
     if cv2.contourArea(top_cnt) < 2000 or cv2.contourArea(top_cnt) > 8000:
-        return None
+        return (None, None)
     contours.pop(top_cnt_index)
 
     bottom_cnt = max(contours, key = cv2.contourArea)
@@ -114,15 +114,15 @@ def plate_parse(image):
     ratio = cv2.contourArea(top_cnt)/cv2.contourArea(bottom_cnt)
 
     if ratio < 5 or ratio > 6:
-        return None
+        return (None, None)
 
     top_box = cv2.boxPoints(cv2.minAreaRect(top_cnt))
     bottom_box = cv2.boxPoints(cv2.minAreaRect(bottom_cnt))
 
 
-    pts = assemble_box(op_box, bottom_box)
+    pts = assemble_box(top_box, bottom_box)
 
-    cv2.drawContours(image, np.int0([pts]), 0, (0, 255, 0), 3)
+    # cv2.drawContours(image, np.int0([pts]), 0, (0, 255, 0), 3)
 
 
 

@@ -52,6 +52,8 @@ def getRightLine(hsv):
     if len(contours) > 0:
         right_line = max(contours, key=lambda cnt : getCX(cnt, width))
         cX = getCX(right_line, width)
+        
+        # cv2.imshow('Left Line', cv2.drawContours(hsv, [right_line], 0, (255, 0, 0), 3))
 
     return cX, cY
 
@@ -68,6 +70,7 @@ def getLeftLine(hsv):
     if len(contours) > 0:
         sort = sorted(contours, key=lambda cnt : getCX(cnt, width), reverse=True)
         left_line = max(sort, key=lambda cnt : getCX(cnt, width))
+        # cv2.imshow('Left Line', cv2.drawContours(hsv, [left_line], 0, (255, 0, 0), 3))
 
         cX = getCX(left_line, width)
 
@@ -86,3 +89,12 @@ def pidCalc(err):
     i=0
     d=0
     return p + i + d
+
+# Checks if car is in center of image
+def checkForCar(hsv):
+    height, width, _ = hsv.shape
+    threshold = cv2.inRange(hsv[height/4:3*height/4, width/4:], (0, 0, 45), (0, 0, 79))
+    kernel = np.ones((2, 2), np.uint8)
+    thresh_erode = cv2.erode(threshold, kernel, iterations=1)
+    cv2.imshow("Threshold", thresh_erode)
+    return np.count_nonzero(thresh_erode) > 100

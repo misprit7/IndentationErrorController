@@ -26,6 +26,7 @@ class State(Enum):
   PEDESTRIAN_RUN = 5
   TURN_INTO_LOOP = 6
   LOOK_AROUND = 7
+  INITIAL_TURN = 8
 
 state = State.STARTUP
 
@@ -84,9 +85,16 @@ def image_callback(img_msg):
 
     if state == State.STARTUP:
         # state_change(State.OUTSIDE_LOOP)
-        state_change(State.OUTSIDE_LOOP)
+        state_change(State.INITIAL_TURN)
         move(0, 0)
-    if state == State.OUTSIDE_LOOP:
+        timer = rospy.get_time()
+
+    elif state == State.INITIAL_TURN:
+        move(0.2, 0.5)
+        if rospy.get_time() - timer > 1:
+            state_change(State.OUTSIDE_LOOP)
+
+    elif state == State.OUTSIDE_LOOP:
         # Get Centroid of right side white line
         cX, cY = getRightLine(hsv)
         cv2.circle(cv_image, (cX, cY), 5, [0, 255, 0], -1)
@@ -105,10 +113,10 @@ def image_callback(img_msg):
         parking_num, plate = plate_parse(cv_image)
         print(plate)
 
-        if True:
-            timer = rospy.get_time()
-            print(timer)
-            state_change(State.TURN_INTO_LOOP)
+        # if True:
+        #     timer = rospy.get_time()
+        #     print(timer)
+        #     state_change(State.TURN_INTO_LOOP)
 
     elif state == State.TURN_INTO_LOOP:
         global lastCar

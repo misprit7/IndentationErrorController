@@ -101,10 +101,10 @@ def image_callback(img_msg):
         parking_num, plate = plate_parse(cv_image)
         print(plate)
 
-        if True:
-            timer = rospy.get_time()
-            print(timer)
-            state_change(State.TURN_INTO_LOOP)
+        # if True:
+        #     timer = rospy.get_time()
+        #     print(timer)
+        #     state_change(State.TURN_INTO_LOOP)
 
     elif state == State.TURN_INTO_LOOP:
         if checkForCar(hsv):

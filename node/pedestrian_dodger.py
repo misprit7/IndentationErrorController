@@ -19,6 +19,6 @@ def is_movement(img):
     kernel = np.ones((3, 3), np.uint8)
     mask_erosion = cv2.erode(mask, kernel, iterations=2)
 
-    # cv2.imshow('Background Subtraction', mask_erosion)
-    return np.any(mask_erosion)
+    cv2.imshow('Background Subtraction', mask_erosion)
+    return np.count_nonzero(mask_erosion) > 2
 

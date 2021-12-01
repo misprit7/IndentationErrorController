@@ -50,22 +50,67 @@ def assemble_box(top_box, bottom_box):
 
     return pts
 
+def make_brighter(hsv):
+    hsv = np.array(hsv, dtype = np.float64)
+    hsv[:,:,1] = hsv[:,:,1]*2
+    hsv[:,:,1][hsv[:,:,1]>255] = 255
+    hsv[:,:,2] = hsv[:,:,2]*2
+    hsv[:,:,2][hsv[:,:,2]>255] = 255
+    return np.array(hsv, dtype=np.uint8)
+
+def get_digits(license):
+
+    # license_hsv = cv2.cvtColor(license, cv2.COLOR_BGR2HSV)
+    license = make_brighter(license)
+
+    sharpen_kernel = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
+    sharpen = cv2.filter2D(license, -1, sharpen_kernel)
+    # temp = cv2.cvtColor(license, cv2.COLOR_HSV2BGR)
+    cv2.imshow('sharpened', license)
+    # cv2.imwrite('/home/fizzer/ros_ws/src/indentation_error_controller/test/license_bright.png', temp)
+
+    # thresh = cv2.inRange(license_hsv, (106, 105, 84), (127, 255, 255))
+    # sharpen = np.array(sharpen, dtype=np.uint8)
+    sharpen = cv2.cvtColor(sharpen, cv2.COLOR_BGR2GRAY)
+    _,thresh = cv2.threshold(sharpen, 220, 255, cv2.THRESH_BINARY_INV)
+    # _,thresh = cv2.threshold(sharpen,0,255,cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU)
+    print(thresh.shape)
+    cv2.imshow("thresh", thresh)
+    # thresh = np.array(thresh, dtype=np)
+    _,contours,hierarchy = cv2.findContours(thresh, 1, 2)
+    contours = sorted(contours, key=cv2.contourArea)[::-1]
+
+    pieces = []
+    pieces_x = []
+    for i, cnt in enumerate(contours[0:4]):
+        # cv2.drawContours(license, np.int0([cnt]), 0, (0, 255, 0), 3)
+        x,y,w,h = cv2.boundingRect(cnt)
+        cv2.rectangle(license,(x,y),(x+w,y+h),(0,255,0),2)
+        piece = cv2.resize(license[y:y+h, x:x+w], (105, 150), interpolation = cv2.INTER_AREA)
+        pieces.append(piece)
+        pieces_x.append(x)
+
+    pieces = [x for _,x in sorted(zip(pieces_x, pieces))]
+    for i, piece in enumerate(pieces):
+        cv2.imshow('pieces' + str(i), piece)
+    return pieces
+
 def license_parse(license):
     global loaded_model
     global sess1
     global graph1
     predicted = []
     license = license[1250:1551]
-    cv2.imshow("license", license)
+    pieces = get_digits(license)
 
-    with graph1.as_default():
-        set_session(sess1)
-        for i in [40, 145, 350, 455]:
-            piece = license[100:250, i:i+105]
-            piece = cv2.cvtColor(piece, cv2.COLOR_RGB2BGR)
-            piece_aug = np.expand_dims(piece, axis=0)
-            prediction = loaded_model.predict(piece_aug)[0]
-            predicted += decode(prediction)
+
+    # with graph1.as_default():
+    #     set_session(sess1)
+    #     for piece in pieces:
+    #         piece = cv2.cvtColor(piece, cv2.COLOR_RGB2BGR)
+    #         piece_aug = np.expand_dims(piece, axis=0)
+    #         prediction = loaded_model.predict(piece_aug)[0]
+    #         predicted += decode(prediction)
 
     return predicted
 

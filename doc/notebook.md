@@ -41,3 +41,5 @@ Xander Naumenko and Nader Kamali
     * https://www.geeksforgeeks.org/background-subtraction-opencv/
 * November 29 - December 1
   * Got inside loop turning working
+  * Added quick turn to face inward when making wide turns around inside license plates
+  * Added initial turn to get robot started driving

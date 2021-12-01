@@ -72,11 +72,13 @@ timer = 0
 angle = 0
 plates = ['']*8
 lastCar = 0
+pCount = 0
 def image_callback(img_msg):
     global state
     global timer
     global pedestrian_no_move_counter
     global plates
+    global pCount
     try:
         cv_image = bridge.imgmsg_to_cv2(img_msg, "passthrough")
     except CvBridgeError, e:
@@ -88,18 +90,24 @@ def image_callback(img_msg):
     height, width, _ = hsv.shape
 
     if state == State.STARTUP:
-        plate_pub.publish(str("IndError,naderson,0,XR58"))
-
-        # state_change(State.OUTSIDE_LOOP)
+        plate_pub.publish(str("IndError,naderson,0,XN69"))
 
         state_change(State.INITIAL_TURN)
+        # state_change(State.OUTSIDE_LOOP)
+        # state_change(State.TURN_INTO_LOOP)
+        # state_change(State.INSIDE_LOOP)
+
         move(0, 0)
         timer = rospy.get_time()
 
     elif state == State.INITIAL_TURN:
-        move(0.2, 0.5)
-        if rospy.get_time() - timer > 1:
+        if rospy.get_time() - timer < 1:
+            move(0.3, 0)
+        elif rospy.get_time() - timer < 2:
+            move(0, 1.5)
+        else:
             state_change(State.OUTSIDE_LOOP)
+            timer = rospy.get_time()
 
     elif state == State.OUTSIDE_LOOP:
         # Get Centroid of right side white line
@@ -115,18 +123,26 @@ def image_callback(img_msg):
             return
 
 
-        pid = pidCalc(2.0 * (cX - 4 * width / 5) / width, 3.0, 1.0, -300.0)
-        # if abs(pid) >= 1:
-        #     move(0.0, pid)
-        # else:
-        #     move(0.3, pid)
+        pid = pidCalc(2.0 * (cX - 4 * width / 5) / width, 4.0, 1.0, -500.0)
+        if abs(pid) >= 1.5:
+            move(0.15, 2*pid/3)
+        else:
+            move(0.3, pid)
         # move(0, 0)
-        move(0.3, pid)
+        # move(0.3, pid)
 
         parking_num, plate = plate_parse(cv_image, hsv)
         if plate != None:
             print(plate, " at parking stall ", parking_num)
             plate_pub.publish(str('IndError,naderson,{0},{1}'.format(parking_num, plate)))
+            plates[int(parking_num)-1] = plate
+            if parking_num == '1' and (plates[3]!='' or plates[4]!=''):
+                pCount += 1
+                timer = rospy.get_time()
+
+        if pCount > 1 and rospy.get_time() - timer > 1:
+            state_change(State.TURN_INTO_LOOP)
+                
 
         # if True:
         #     timer = rospy.get_time()
@@ -135,7 +151,7 @@ def image_callback(img_msg):
 
     elif state == State.TURN_INTO_LOOP:
         global lastCar
-        print(rospy.get_time() - lastCar)
+        # print(rospy.get_time() - lastCar)
         carInFront = checkForCar(hsv)
         if rospy.get_time() - lastCar < 1 or carInFront:
             # Wait until car passes
@@ -146,7 +162,7 @@ def image_callback(img_msg):
                 lastCar = rospy.get_time()
         else:
             global angle
-            cX, cY = getRightLine(hsv[2*height/3:, :width/2])
+            cX, cY = getRightLine(hsv[2*height/3:, :width/2], height, width)
 
 
             cv2.circle(cv_image, (cX, cY), 5, [0, 255, 0], -1)
@@ -161,21 +177,38 @@ def image_callback(img_msg):
                 state_change(State.INSIDE_LOOP)
                 # Sets the timer negative so first loop triggers turning
                 timer = -20
+                pCount = 0
 
     elif state == State.INSIDE_LOOP:
         cX, cY = getCentroid(hsv)
         cv2.circle(cv_image, (cX, cY), 5, [0, 255, 0], -1)
 
-        pid = pidCalc(2.0 * (cX - width / 2) / width, 3.0, 1.0, 1.0)
+        pid = pidCalc(2.0 * (cX - width / 2) / width, 4.0, 1.0, -500.0)
         # move(0, 0)
-        print(pid)
-        move(0.3, pid)
+        # print(pid)
+        if abs(pid) >= 1.5:
+            move(0.15, pid)
+        else:
+            move(0.3, pid)
+        # move(0.3, pid)
 
-        # print(plate)
+        parking_num, plate = plate_parse(cv_image, hsv)
+        if plate != None and int(parking_num) >= 7 :
+            print(plate, " at parking stall ", parking_num)
+            plate_pub.publish(str('IndError,naderson,{0},{1}'.format(parking_num, plate)))
+            if parking_num == '8':
+                pCount += 1
+                timer = rospy.get_time()
+        
+        if pCount > 0 and rospy.get_time() - timer > 1:
+            plate_pub.publish(str("IndError,naderson,-1,XN69"))
+            move(0, 10000)
 
-        if np.abs(pid) > 0.6 and rospy.get_time() - timer > 7:
-            state_change(State.LOOK_AROUND)
-            timer = rospy.get_time()
+            
+
+        # if np.abs(pid) > 0.6 and rospy.get_time() - timer > 7:
+        #     state_change(State.LOOK_AROUND)
+        #     timer = rospy.get_time()
 
     elif state == State.LOOK_AROUND:
         if rospy.get_time() - timer > 2:

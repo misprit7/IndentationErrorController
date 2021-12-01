@@ -17,8 +17,8 @@ set_session(sess1)
 
 # load json
 from tensorflow import keras
-model_n = keras.models.load_model("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model-medium-blur-nums.h5")
-model_l = keras.models.load_model("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model-medium-blur-chars.h5")
+model_n = keras.models.load_model("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model-heavy-blur-nums.h5")
+model_l = keras.models.load_model("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model-heavy-blur-chars.h5")
 
 encoder_l = {}
 encoder_n = {}

@@ -25,7 +25,7 @@ def is_movement(img):
 
     count = np.count_nonzero(mask)
     print(count)
-    if count > 1500 or count < 400:
+    if count > 1700 or count < 400:
         return True
     
     m = cv2.moments(mask)

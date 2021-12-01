@@ -78,8 +78,8 @@ def image_callback(img_msg):
     height, width, _ = hsv.shape
 
     if state == State.STARTUP:
-        # state_change(State.OUTSIDE_LOOP)
-        state_change(State.INSIDE_LOOP)
+        state_change(State.OUTSIDE_LOOP)
+        # state_change(State.INSIDE_LOOP)
     if state == State.OUTSIDE_LOOP:
         # Get Centroid of right side white line
         cX, cY = getRightLine(hsv)

@@ -20,13 +20,21 @@ graph1 = tf.get_default_graph()
 set_session(sess1)
 
 # load json
-json_file = open('/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model.json', 'r')
-loaded_model_json = json_file.read()
-json_file.close()
-loaded_model = models.model_from_json(loaded_model_json)
+json_file_letters = open('/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model_letters.json', 'r')
+loaded_model_json_letters = json_file_letters.read()
+json_file_letters.close()
+loaded_model_letters = models.model_from_json(loaded_model_json_letters)
 # load weights into new model
-loaded_model.load_weights("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model.h5")
-# loaded_model = models.load_model("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model.h5")
+loaded_model_letters.load_weights("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model_letters.h5")
+
+
+# load json
+json_file_nums = open('/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model_nums.json', 'r')
+loaded_model_json_nums = json_file_nums.read()
+json_file_nums.close()
+loaded_model_nums = models.model_from_json(loaded_model_json_nums)
+# load weights into new model
+loaded_model_nums.load_weights("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model_nums.h5")
 
 encoder = {}
 [encoder.update({chr(i):i-65}) for i in range(65, 91)]
@@ -51,20 +59,50 @@ def assemble_box(top_box, bottom_box):
     return pts
 
 def license_parse(license):
-    global loaded_model
+    global loaded_model_nums
+    global loaded_model_letters
     global sess1
     global graph1
     predicted = []
     license = license[1250:1551]
+    license = cv2.cvtColor(license, cv2.COLOR_BGR2GRAY)
+    license = cv2.threshold(license,70,255,cv2.THRESH_BINARY|cv2.THRESH_OTSU)[1]
     cv2.imshow("license", license)
+
+    # with graph1.as_default():
+    #     set_session(sess1)
+    #     for i in [40, 145]:
+    #         piece = license[100:250, i:i+105]
+    #         piece = cv2.cvtColor(piece, cv2.COLOR_RGB2BGR)
+    #         piece_aug = np.expand_dims(piece, axis=0)
+    #         prediction = loaded_model_letters.predict(piece_aug)[0]
+    #         predicted += decode(prediction)
+    #     for i in [350, 455]:
+    #         piece = license[100:250, i:i+105]
+    #         piece = cv2.cvtColor(piece, cv2.COLOR_RGB2BGR)
+    #         piece_aug = np.expand_dims(piece, axis=0)
+    #         prediction = loaded_model_nums.predict(piece_aug)[0]
+    #         predicted += decode(prediction)
 
     with graph1.as_default():
         set_session(sess1)
-        for i in [40, 145, 350, 455]:
+        for i in [40, 145]:
             piece = license[100:250, i:i+105]
-            piece = cv2.cvtColor(piece, cv2.COLOR_RGB2BGR)
+            piece = cv2.cvtColor(piece, cv2.COLOR_BGR2GRAY)
+            piece = cv2.threshold(license,70,255,cv2.THRESH_BINARY|cv2.THRESH_OTSU)[1]
+            cv2.imshow("letter", piece)
+
             piece_aug = np.expand_dims(piece, axis=0)
-            prediction = loaded_model.predict(piece_aug)[0]
+            prediction = loaded_model_letters.predict(piece_aug)[0]
+            predicted += decode(prediction)
+        for i in [350, 455]:
+            piece = license[100:250, i:i+105]
+            piece = cv2.cvtColor(piece, cv2.COLOR_BGR2GRAY)
+            piece = cv2.threshold(license,70,255,cv2.THRESH_BINARY|cv2.THRESH_OTSU)[1]
+            cv2.imshow("number", piece)
+
+            piece_aug = np.expand_dims(piece, axis=0)
+            prediction = loaded_model_nums.predict(piece_aug)[0]
             predicted += decode(prediction)
 
     return predicted
@@ -120,9 +158,9 @@ def plate_parse(image):
     bottom_box = cv2.boxPoints(cv2.minAreaRect(bottom_cnt))
 
 
-    pts = assemble_box(op_box, bottom_box)
+    pts = assemble_box(top_box, bottom_box)
 
-    cv2.drawContours(image, np.int0([pts]), 0, (0, 255, 0), 3)
+    # cv2.drawContours(image, np.int0([pts]), 0, (0, 255, 0), 3)
 
 
 

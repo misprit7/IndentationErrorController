@@ -58,6 +58,51 @@ def assemble_box(top_box, bottom_box):
 
     return pts
 
+def make_brighter(hsv):
+    hsv = np.array(hsv, dtype = np.float64)
+    hsv[:,:,1] = hsv[:,:,1]*2
+    hsv[:,:,1][hsv[:,:,1]>255] = 255
+    hsv[:,:,2] = hsv[:,:,2]*2
+    hsv[:,:,2][hsv[:,:,2]>255] = 255
+    return np.array(hsv, dtype=np.uint8)
+
+def get_digits(license):
+
+    # license_hsv = cv2.cvtColor(license, cv2.COLOR_BGR2HSV)
+    license = make_brighter(license)
+
+    sharpen_kernel = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
+    sharpen = cv2.filter2D(license, -1, sharpen_kernel)
+    # temp = cv2.cvtColor(license, cv2.COLOR_HSV2BGR)
+    cv2.imshow('sharpened', license)
+    # cv2.imwrite('/home/fizzer/ros_ws/src/indentation_error_controller/test/license_bright.png', temp)
+
+    # thresh = cv2.inRange(license_hsv, (106, 105, 84), (127, 255, 255))
+    # sharpen = np.array(sharpen, dtype=np.uint8)
+    sharpen = cv2.cvtColor(sharpen, cv2.COLOR_BGR2GRAY)
+    _,thresh = cv2.threshold(sharpen, 220, 255, cv2.THRESH_BINARY_INV)
+    # _,thresh = cv2.threshold(sharpen,0,255,cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU)
+    print(thresh.shape)
+    cv2.imshow("thresh", thresh)
+    # thresh = np.array(thresh, dtype=np)
+    _,contours,hierarchy = cv2.findContours(thresh, 1, 2)
+    contours = sorted(contours, key=cv2.contourArea)[::-1]
+
+    pieces = []
+    pieces_x = []
+    for i, cnt in enumerate(contours[0:4]):
+        # cv2.drawContours(license, np.int0([cnt]), 0, (0, 255, 0), 3)
+        x,y,w,h = cv2.boundingRect(cnt)
+        cv2.rectangle(license,(x,y),(x+w,y+h),(0,255,0),2)
+        piece = cv2.resize(license[y:y+h, x:x+w], (105, 150), interpolation = cv2.INTER_AREA)
+        pieces.append(piece)
+        pieces_x.append(x)
+
+    pieces = [x for _,x in sorted(zip(pieces_x, pieces))]
+    for i, piece in enumerate(pieces):
+        cv2.imshow('pieces' + str(i), piece)
+    return pieces
+
 def license_parse(license):
     global loaded_model_nums
     global loaded_model_letters
@@ -65,45 +110,17 @@ def license_parse(license):
     global graph1
     predicted = []
     license = license[1250:1551]
-    license = cv2.cvtColor(license, cv2.COLOR_BGR2GRAY)
-    license = cv2.threshold(license,70,255,cv2.THRESH_BINARY|cv2.THRESH_OTSU)[1]
-    cv2.imshow("license", license)
+
+    pieces = get_digits(license)
+
 
     # with graph1.as_default():
     #     set_session(sess1)
-    #     for i in [40, 145]:
-    #         piece = license[100:250, i:i+105]
+    #     for piece in pieces:
     #         piece = cv2.cvtColor(piece, cv2.COLOR_RGB2BGR)
     #         piece_aug = np.expand_dims(piece, axis=0)
-    #         prediction = loaded_model_letters.predict(piece_aug)[0]
+    #         prediction = loaded_model.predict(piece_aug)[0]
     #         predicted += decode(prediction)
-    #     for i in [350, 455]:
-    #         piece = license[100:250, i:i+105]
-    #         piece = cv2.cvtColor(piece, cv2.COLOR_RGB2BGR)
-    #         piece_aug = np.expand_dims(piece, axis=0)
-    #         prediction = loaded_model_nums.predict(piece_aug)[0]
-    #         predicted += decode(prediction)
-
-    with graph1.as_default():
-        set_session(sess1)
-        for i in [40, 145]:
-            piece = license[100:250, i:i+105]
-            piece = cv2.cvtColor(piece, cv2.COLOR_BGR2GRAY)
-            piece = cv2.threshold(license,70,255,cv2.THRESH_BINARY|cv2.THRESH_OTSU)[1]
-            cv2.imshow("letter", piece)
-
-            piece_aug = np.expand_dims(piece, axis=0)
-            prediction = loaded_model_letters.predict(piece_aug)[0]
-            predicted += decode(prediction)
-        for i in [350, 455]:
-            piece = license[100:250, i:i+105]
-            piece = cv2.cvtColor(piece, cv2.COLOR_BGR2GRAY)
-            piece = cv2.threshold(license,70,255,cv2.THRESH_BINARY|cv2.THRESH_OTSU)[1]
-            cv2.imshow("number", piece)
-
-            piece_aug = np.expand_dims(piece, axis=0)
-            prediction = loaded_model_nums.predict(piece_aug)[0]
-            predicted += decode(prediction)
 
     return predicted
 
@@ -132,27 +149,35 @@ def plate_parse(image):
 
     thresh = max([thresh1, thresh2], key = cv2.countNonZero)
 
-    kernel = np.ones((3, 3), np.uint8)
+    kernel = np.ones((2, 2), np.uint8)
     img_erosion = cv2.erode(thresh, kernel, iterations=1)
     img_dilation = cv2.dilate(img_erosion, kernel, iterations=1)
 
+    cv2.imshow('contours', img_dilation)
 
     _,contours,hierarchy = cv2.findContours(img_dilation, 1, 2)
     if len(contours) < 2:
-        return None
+        print("Not enough contours")
+        return (None, None)
 
     top_cnt_index = max(range(len(contours)), key=lambda i: cv2.contourArea(contours[i]))
     top_cnt = contours[top_cnt_index]
-    if cv2.contourArea(top_cnt) < 2000 or cv2.contourArea(top_cnt) > 8000:
-        return None
+    if cv2.contourArea(top_cnt) < 1500 or cv2.contourArea(top_cnt) > 8000:
+        print('Contours outside of range')
+        return (None, None)
     contours.pop(top_cnt_index)
 
     bottom_cnt = max(contours, key = cv2.contourArea)
 
+
+    # cv2.drawContours(image, np.int0([top_cnt]), 0, (0, 255, 0), 3)
+    # cv2.drawContours(image, np.int0([bottom_cnt]), 0, (0, 0, 255), 3)
+
     ratio = cv2.contourArea(top_cnt)/cv2.contourArea(bottom_cnt)
 
     if ratio < 5 or ratio > 6:
-        return None
+        print("Wrong contour ratio")
+        return (None, None)
 
     top_box = cv2.boxPoints(cv2.minAreaRect(top_cnt))
     bottom_box = cv2.boxPoints(cv2.minAreaRect(bottom_cnt))
@@ -160,9 +185,8 @@ def plate_parse(image):
 
     pts = assemble_box(top_box, bottom_box)
 
+
     # cv2.drawContours(image, np.int0([pts]), 0, (0, 255, 0), 3)
-
-
 
 
     height = 1800

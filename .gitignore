@@ -1,4 +1,10 @@
 cnn_models/model.h5
+cnn_models/model_letters.h5
+cnn_models/model_letters.json
+cnn_models/model_nums.h5
+cnn_models/model_nums.json
+cnn_models/model_gen.h5
+cnn_models/model_gen.json
 
 
 # Byte-compiled / optimized / DLL files

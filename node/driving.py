@@ -90,7 +90,7 @@ def pidCalc(err, wP, wI, wD):
     p = -err * wP
     i = 0 
     d = wD * (err - lastErr) / (rospy.get_time() - lastTime)
-    print("d: ", d)
+    # print("d: ", d)
     return p + i + d
 
 # Checks if car is in center of image
@@ -99,5 +99,6 @@ def checkForCar(hsv):
     threshold = cv2.inRange(hsv[height/4:3*height/4, width/4:], (0, 0, 45), (0, 0, 79))
     kernel = np.ones((2, 2), np.uint8)
     thresh_erode = cv2.erode(threshold, kernel, iterations=1)
-    cv2.imshow("Threshold", thresh_erode)
-    return np.count_nonzero(thresh_erode) > 100
+    print(thresh_erode.shape)
+    # cv2.imshow("Car Threshold", thresh_erode)
+    return np.count_nonzero(thresh_erode) > 200

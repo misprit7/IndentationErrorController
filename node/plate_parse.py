@@ -17,8 +17,8 @@ set_session(sess1)
 
 # load json
 from tensorflow import keras
-model_n = keras.models.load_model("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model-medium-blur-nums.h5")
-model_l = keras.models.load_model("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model-medium-blur-chars.h5")
+model_n = keras.models.load_model("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model-heavy-blur-nums.h5")
+model_l = keras.models.load_model("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model-heavy-blur-chars.h5")
 
 encoder_l = {}
 encoder_n = {}
@@ -82,7 +82,7 @@ def get_digits(license):
     _,contours,hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, 2)
     contours = sorted(contours, key=cv2.contourArea, reverse=True)
     thresh = cv2.GaussianBlur(thresh,(5,5),cv2.BORDER_DEFAULT)
-    cv2.imshow("thresh", thresh)
+    # cv2.imshow("thresh", thresh)
 
     pieces = []
     pieces_x = []
@@ -94,7 +94,7 @@ def get_digits(license):
         pieces.append(piece)
         pieces_x.append(x)
 
-    cv2.imshow('sharpened', license)
+    # cv2.imshow('sharpened', license)
 
 
     pieces = [x for _,x in sorted(zip(pieces_x, pieces), key=lambda x : x[0])]
@@ -161,7 +161,7 @@ def parking_parse(parking_stall):
 
     x,y,w,h = cv2.boundingRect(contours[0])
     piece = cv2.resize(thresh[y:y+h, x:x+w], (105, 150), interpolation = cv2.INTER_AREA)
-    cv2.imshow("ps", piece)
+    # cv2.imshow("ps", piece)
 
     return read_num(piece)
 

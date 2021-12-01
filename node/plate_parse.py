@@ -17,8 +17,8 @@ set_session(sess1)
 
 # load json
 from tensorflow import keras
-model_n = keras.models.load_model("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model-ideal-nums.h5")
-model_l = keras.models.load_model("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model-ideal-chars.h5")
+model_n = keras.models.load_model("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model-medium-blur-nums.h5")
+model_l = keras.models.load_model("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model-medium-blur-chars.h5")
 
 encoder_l = {}
 encoder_n = {}
@@ -181,6 +181,7 @@ def decode_l(encoded):
 # height: height of returned image
 # returns: warped perspective image of plate, None if none found
 def plate_parse(image, hsv):
+    debug = True
     width = 600
     height = 1800
     
@@ -192,8 +193,9 @@ def plate_parse(image, hsv):
     thresh = thresh1 | thresh2
     area = np.count_nonzero(thresh)
 
-    if np.count_nonzero(thresh) < 6000 or area > 40000:
-        print("Not enough area / Too much area")
+    if np.count_nonzero(thresh) < 15000 or area > 40000:
+        if debug: 
+            print("Not enough area / Too much area")
         return (None, None)
 
     kernel = np.ones((2, 2), np.uint8)
@@ -204,7 +206,8 @@ def plate_parse(image, hsv):
 
     _,contours,hierarchy = cv2.findContours(img_dilation, 1, 2)
     if len(contours) < 2:
-        print("Not enough contours")
+        if debug:
+            print("Not enough contours")
         return (None, None)
 
     top_cnt_index = max(range(len(contours)), key=lambda i: cv2.contourArea(contours[i]))
@@ -232,8 +235,9 @@ def plate_parse(image, hsv):
 
     pts = assemble_box(top_box, bottom_box)
 
-    if pts[0][0] < 5:
-        print("Cut off")
+    if pts[0][0] < 10 or pts[3][0] < 10:
+        if debug:
+            print("Cut off")
         return (None, None)
 
 

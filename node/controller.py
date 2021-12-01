@@ -109,13 +109,13 @@ def image_callback(img_msg):
             return
 
 
-        pid = pidCalc(2.0 * (cX - 4 * width / 5) / width, 2.0, 1.0, 1.0)
-        # if abs(pid) >= 3.0:
-        #     move(0.0, -pid/3)
+        pid = pidCalc(2.0 * (cX - 4 * width / 5) / width, 4.0, 1.0, -5000.0)
+        # if abs(pid) >= 0.4:
+        #     move(0.0, pid)
         # else:
-        #     move(0.2, pid)
+        #     move(0.3, pid)
         # move(0, 0)
-        move(0.1, pid)
+        move(0.3, pid)
 
         parking_num, plate = plate_parse(cv_image, hsv)
         if plate != None:

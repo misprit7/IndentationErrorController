@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 
+import rospy
+
 # Get centroid of road from image
 # hsv: image to get centroid for
 # returns: cx, cy where cx and cy are centroids
@@ -79,11 +81,16 @@ def getLeftLine(hsv):
 
 # Calculates pid from error
 # err: Error of prediction
+lastErr = 0
+lastTime = 0
 def pidCalc(err, wP, wI, wD):
+    global lastErr
+    global lastTime
 
     p = -err * wP
     i = 0 
-    d = 0
+    d = wD * (err - lastErr) / (rospy.get_time() - lastTime)
+    print("d: ", d)
     return p + i + d
 
 # Checks if car is in center of image

@@ -20,13 +20,21 @@ graph1 = tf.get_default_graph()
 set_session(sess1)
 
 # load json
-json_file = open('/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model.json', 'r')
-loaded_model_json = json_file.read()
-json_file.close()
-loaded_model = models.model_from_json(loaded_model_json)
+json_file_letters = open('/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model_letters.json', 'r')
+loaded_model_json_letters = json_file_letters.read()
+json_file_letters.close()
+loaded_model_letters = models.model_from_json(loaded_model_json_letters)
 # load weights into new model
-loaded_model.load_weights("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model.h5")
-# loaded_model = models.load_model("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model.h5")
+loaded_model_letters.load_weights("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model_letters.h5")
+
+
+# load json
+json_file_nums = open('/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model_nums.json', 'r')
+loaded_model_json_nums = json_file_nums.read()
+json_file_nums.close()
+loaded_model_nums = models.model_from_json(loaded_model_json_nums)
+# load weights into new model
+loaded_model_nums.load_weights("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model_nums.h5")
 
 encoder = {}
 [encoder.update({chr(i):i-65}) for i in range(65, 91)]
@@ -96,11 +104,13 @@ def get_digits(license):
     return pieces
 
 def license_parse(license):
-    global loaded_model
+    global loaded_model_nums
+    global loaded_model_letters
     global sess1
     global graph1
     predicted = []
     license = license[1250:1551]
+
     pieces = get_digits(license)
 
 

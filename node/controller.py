@@ -90,9 +90,9 @@ def image_callback(img_msg):
     if state == State.STARTUP:
         plate_pub.publish(str("IndError,naderson,0,XR58"))
 
-        state_change(State.OUTSIDE_LOOP)
+        # state_change(State.OUTSIDE_LOOP)
 
-        # state_change(State.INITIAL_TURN)
+        state_change(State.INITIAL_TURN)
         move(0, 0)
         timer = rospy.get_time()
 
@@ -115,8 +115,8 @@ def image_callback(img_msg):
             return
 
 
-        pid = pidCalc(2.0 * (cX - 4 * width / 5) / width, 4.0, 1.0, -5000.0)
-        # if abs(pid) >= 0.4:
+        pid = pidCalc(2.0 * (cX - 4 * width / 5) / width, 3.0, 1.0, -300.0)
+        # if abs(pid) >= 1:
         #     move(0.0, pid)
         # else:
         #     move(0.3, pid)
@@ -194,12 +194,13 @@ def image_callback(img_msg):
     elif state == State.PEDESTRIAN_STOP:
         # if not is_movement(cv_image):
         if not is_movement(cv_image):
-            if pedestrian_no_move_counter > 5:
-                state_change(State.PEDESTRIAN_RUN)
-                timer = rospy.get_time()
-                pedestrian_no_move_counter = 0 
-            else:
-                pedestrian_no_move_counter += 1
+            # print('move!')
+            # if pedestrian_no_move_counter > 5:
+            state_change(State.PEDESTRIAN_RUN)
+            timer = rospy.get_time()
+                # pedestrian_no_move_counter = 0 
+            # else:
+            #     pedestrian_no_move_counter += 1
     elif state == State.PEDESTRIAN_RUN:
         if rospy.get_time() - timer < 1:
             move(0.5, 0)
@@ -208,7 +209,7 @@ def image_callback(img_msg):
             state_change(State.OUTSIDE_LOOP)
 
 
-    show_image(cv_image)
+    # show_image(cv_image)
 
 
 

@@ -24,8 +24,6 @@ encoder_l = {}
 encoder_n = {}
 [encoder_l.update({i-65:chr(i)}) for i in range(65, 91)]
 [encoder_n.update({i-48:chr(i)}) for i in range(48, 58)]
-print(encoder_l)
-print(encoder_n)
 
 
 def comp_h(tup):
@@ -151,14 +149,19 @@ def license_parse(license):
 
 def parking_parse(parking_stall):
     parking_stall = parking_stall[700:1151, 300:]
-    parking_stall = np.expand_dims(parking_stall, axis=0)
+
+    parking_stall = cv2.cvtColor(parking_stall, cv2.COLOR_BGR2GRAY)
     _,thresh = cv2.threshold(parking_stall,50,255,cv2.THRESH_BINARY_INV|cv2.THRESH_OTSU)
 
     _,contours,hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, 2)
+    if len(contours) < 1:
+        return None
+
     contours = sorted(contours, key=cv2.contourArea, reverse=True)
 
     x,y,w,h = cv2.boundingRect(contours[0])
     piece = cv2.resize(thresh[y:y+h, x:x+w], (105, 150), interpolation = cv2.INTER_AREA)
+    cv2.imshow("ps", piece)
 
     return read_num(piece)
 

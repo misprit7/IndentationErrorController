@@ -6,6 +6,8 @@ cnn_models/model_nums.json
 cnn_models/model_gen.h5
 cnn_models/model_gen.json
 
+*.pyc
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -17,6 +17,7 @@ from plate_parse import plate_parse
 from pedestrian_dodger import get_bottom_red, is_movement
 from driving import getRightLine, getLeftLine, pidCalc, checkForCar, getCentroid
 
+from std_msgs.msg import String
 
 class State(Enum):
   STARTUP = 1
@@ -37,6 +38,9 @@ rospy.init_node('indentation_error_controller')
 rate = rospy.Rate(2)
 
 move_pub = rospy.Publisher('/R1/cmd_vel', Twist, 
+  queue_size=1)
+
+plate_pub = rospy.Publisher('/license_plate', String,
   queue_size=1)
 
 # Shows an image
@@ -84,6 +88,8 @@ def image_callback(img_msg):
     height, width, _ = hsv.shape
 
     if state == State.STARTUP:
+        plate_pub.publish(str("IndError,naderson,0,XR58"))
+
         state_change(State.OUTSIDE_LOOP)
 
         # state_change(State.INITIAL_TURN)
@@ -120,6 +126,7 @@ def image_callback(img_msg):
         parking_num, plate = plate_parse(cv_image, hsv)
         if plate != None:
             print(plate, " at parking stall ", parking_num)
+            plate_pub.publish(str('IndError,naderson,{0},{1}'.format(parking_num, plate)))
 
         # if True:
         #     timer = rospy.get_time()

@@ -99,6 +99,5 @@ def checkForCar(hsv):
     threshold = cv2.inRange(hsv[height/4:3*height/4, width/4:], (0, 0, 45), (0, 0, 79))
     kernel = np.ones((2, 2), np.uint8)
     thresh_erode = cv2.erode(threshold, kernel, iterations=1)
-    print(thresh_erode.shape)
     # cv2.imshow("Car Threshold", thresh_erode)
-    return np.count_nonzero(thresh_erode) > 200
+    return np.count_nonzero(thresh_erode) > 300

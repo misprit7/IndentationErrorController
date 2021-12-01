@@ -18,7 +18,7 @@ set_session(sess1)
 # load json
 from tensorflow import keras
 model_n = keras.models.load_model("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model-heavy-blur-nums.h5")
-model_l = keras.models.load_model("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model-heavy-blur-chars.h5")
+model_l = keras.models.load_model("/home/fizzer/ros_ws/src/indentation_error_controller/cnn_models/model-heavy-blur-chars-Qs.h5")
 
 encoder_l = {}
 encoder_n = {}
@@ -196,7 +196,7 @@ def plate_parse(image, hsv):
     thresh = thresh1 | thresh2
     area = np.count_nonzero(thresh)
 
-    if np.count_nonzero(thresh) < 15000 or area > 40000:
+    if np.count_nonzero(thresh) < 15000 or area > 25000:
         if debug: 
             print("Not enough area / Too much area")
         return (None, None)

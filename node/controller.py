@@ -73,6 +73,7 @@ angle = 0
 plates = ['']*8
 lastCar = 0
 pCount = 0
+redLineTimer = 0
 def image_callback(img_msg):
     global state
     global timer
@@ -92,9 +93,9 @@ def image_callback(img_msg):
     if state == State.STARTUP:
         plate_pub.publish(str("IndError,naderson,0,XN69"))
 
-        state_change(State.INITIAL_TURN)
+        # state_change(State.INITIAL_TURN)
         # state_change(State.OUTSIDE_LOOP)
-        # state_change(State.TURN_INTO_LOOP)
+        state_change(State.TURN_INTO_LOOP)
         # state_change(State.INSIDE_LOOP)
 
         move(0, 0)
@@ -110,6 +111,7 @@ def image_callback(img_msg):
             timer = rospy.get_time()
 
     elif state == State.OUTSIDE_LOOP:
+        global redLineTimer
         # Get Centroid of right side white line
         cX, cY = getRightLine(hsv, height, width)
         # cv2.circle(cv_image, (cX, cY), 5, [0, 255, 0], -1)
@@ -117,7 +119,7 @@ def image_callback(img_msg):
         # Check for red line
         bottom_red = get_bottom_red(hsv, height)
         # if bottom_red > height - 100:
-        if bottom_red > 0:
+        if bottom_red > 0 and rospy.get_time() - redLineTimer > 4:
             move(0, 0)
             state_change(State.PEDESTRIAN_STOP)
             return
@@ -132,13 +134,14 @@ def image_callback(img_msg):
         # move(0.3, pid)
 
         parking_num, plate = plate_parse(cv_image, hsv)
-        if plate != None:
+        if plate != None and (parking_num != '6' or (plates[4] != '' and plates[0] == '')):
             print(plate, " at parking stall ", parking_num)
             plate_pub.publish(str('IndError,naderson,{0},{1}'.format(parking_num, plate)))
             plates[int(parking_num)-1] = plate
             if parking_num == '1' and (plates[3]!='' or plates[4]!=''):
                 pCount += 1
                 timer = rospy.get_time()
+            
 
         if pCount > 1 and rospy.get_time() - timer > 1:
             state_change(State.TURN_INTO_LOOP)
@@ -225,12 +228,15 @@ def image_callback(img_msg):
 
 
     elif state == State.PEDESTRIAN_STOP:
+        global redLineTimer
         # if not is_movement(cv_image):
         if not is_movement(cv_image):
             # print('move!')
             # if pedestrian_no_move_counter > 5:
-            state_change(State.PEDESTRIAN_RUN)
+            state_change(State.OUTSIDE_LOOP)
             timer = rospy.get_time()
+            redLineTimer = rospy.get_time()
+
                 # pedestrian_no_move_counter = 0 
             # else:
             #     pedestrian_no_move_counter += 1

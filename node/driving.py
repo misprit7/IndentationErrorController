@@ -39,12 +39,11 @@ def getCY(cnt, width):
         cY = int(M["m01"] / M["m00"])
     return cY
 
-def getRightLine(hsv):
+def getRightLine(hsv, height, width):
     frame_threshold = cv2.inRange(hsv, (0, 0, 235), (108, 255, 255))
 
-    height, width = frame_threshold.shape
-
-    _,contours,hierarchy = cv2.findContours(frame_threshold, 1, 2)
+    _,contours,hierarchy = cv2.findContours(frame_threshold[0:height, 0:width], 1, 2)
+    # cv2.imshow("img",frame_threshold[0:height, 0:width])
 
     cX = 4 * width / 5
     cY = 4 * width / 5
@@ -83,8 +82,8 @@ def getLeftLine(hsv):
 def pidCalc(err, wP, wI, wD):
 
     p = -err * wP
-    i=0
-    d=0
+    i = 0 
+    d = 0
     return p + i + d
 
 # Checks if car is in center of image

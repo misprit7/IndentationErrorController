@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
 
-def get_bottom_red(hsv):
-    red_threshold = cv2.inRange(hsv, (0, 182, 99), (0, 255, 255))
+def get_bottom_red(hsv, height):
+    red_threshold = cv2.inRange(hsv[height-100:height,:], (0, 182, 99), (0, 255, 255))
     x, y = np.nonzero(red_threshold)
     if len(y) == 0:
         return 0

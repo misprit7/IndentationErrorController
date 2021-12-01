@@ -97,23 +97,29 @@ def image_callback(img_msg):
 
     elif state == State.OUTSIDE_LOOP:
         # Get Centroid of right side white line
-        cX, cY = getRightLine(hsv)
-        cv2.circle(cv_image, (cX, cY), 5, [0, 255, 0], -1)
+        cX, cY = getRightLine(hsv, height, width)
+        # cv2.circle(cv_image, (cX, cY), 5, [0, 255, 0], -1)
 
         # Check for red line
-        bottom_red = get_bottom_red(hsv)
-        if bottom_red > hsv.shape[0] - 100:
+        bottom_red = get_bottom_red(hsv, height)
+        # if bottom_red > height - 100:
+        if bottom_red > 0:
             move(0, 0)
             state_change(State.PEDESTRIAN_STOP)
             return
 
 
         pid = pidCalc(2.0 * (cX - 4 * width / 5) / width, 2.0, 1.0, 1.0)
-        # move(0.1, pid)
-        move(0, 0)
+        # if abs(pid) >= 3.0:
+        #     move(0.0, -pid/3)
+        # else:
+        #     move(0.2, pid)
+        # move(0, 0)
+        move(0.1, pid)
 
-        parking_num, plate = plate_parse(cv_image)
-        print(plate)
+        parking_num, plate = plate_parse(cv_image, hsv)
+        if plate != None:
+            print(plate, " at parking stall ", parking_num)
 
         # if True:
         #     timer = rospy.get_time()
@@ -134,6 +140,8 @@ def image_callback(img_msg):
         else:
             global angle
             cX, cY = getRightLine(hsv[2*height/3:, :width/2])
+
+
             cv2.circle(cv_image, (cX, cY), 5, [0, 255, 0], -1)
 
             pid = pidCalc(2.0 * (cX - 1 * width / 5) / width, 4.0, 1.0, 1.0)
@@ -173,10 +181,11 @@ def image_callback(img_msg):
         else: 
             move(0, -1)
 
-        parking_num, plate = plate_parse(cv_image)
+        parking_num, plate = plate_parse(cv_image, hsv)
 
 
     elif state == State.PEDESTRIAN_STOP:
+        # if not is_movement(cv_image):
         if not is_movement(cv_image):
             if pedestrian_no_move_counter > 5:
                 state_change(State.PEDESTRIAN_RUN)

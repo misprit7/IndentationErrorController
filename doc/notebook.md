@@ -43,3 +43,8 @@ Xander Naumenko and Nader Kamali
   * Got inside loop turning working
   * Added quick turn to face inward when making wide turns around inside license plates
   * Added initial turn to get robot started driving
+  * Redid neural network to fix unknown bug in training
+  * Got bounding boxes to get characters
+   * Used Otsu's method to do thresholding on characters
+  * Removed pedestrian run state in place of regular driving
+  * Tested final version of code, had competition

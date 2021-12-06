@@ -34,7 +34,7 @@ Xander Naumenko and Nader Kamali
   * Trained CNN model on generated license plate images
     * Blurred images by resizing them, imitating the blur of captured licenses
   * Implemented a plate parser that splits the captured license into characters, then reads them using the CNN
-  * Fixed Keras versioning issues (pending)
+  * Fixed Protobuf versioning issues
     * https://www.icode9.com/content-4-1153066.html
   * Added state machine to keep track of what state the controller is in at every point
   * Implemented pedestrian dodging using background subtraction
